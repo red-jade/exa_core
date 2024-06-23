@@ -2,11 +2,13 @@
 
 𝔼𝕏tr𝔸 𝔼li𝕏ir 𝔸dditions (𝔼𝕏𝔸)
 
-EXA project index: `[exa](https://github.com/red-jade/exa)`
+EXA project index: [exa](https://github.com/red-jade/exa)
 
 Module path: `Exa`
 
-- Utilities relating to specific language modules or features:
+Features:
+
+- Utilities relating to specific language modules or features:<br>   
   Binary, File, List, Map, Tuple, Set (MapSet), String,
   Text (chardata), Message, Option, Process, Random, System.
   
@@ -14,13 +16,13 @@ Module path: `Exa`
   
 - `Math`: floating-point arithmetic and wrappers for Erlang `:math`.
   
-- Trivial functions for `Http`, `Logger`.
-
 - `Parse`: basic combinators for simple types.
 
 - `Factory`: for structs built by data parsers.
 
 - `Stopwatch`: for simple timing and benchmarking tasks.
+
+- Trivial functions for `Http`, `Logger`.
 
 - Type conversions.
 
