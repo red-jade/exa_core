@@ -1,0 +1,12 @@
+First line, perhaps the title.
+
+# a hash comment
+
+content, blah
+more, lorem ipsum
+
+-- another comment
+// and another
+
+the finale
+
