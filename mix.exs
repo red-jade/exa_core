@@ -5,7 +5,7 @@ defmodule Exa.MixProject do
     [
       app: :exa,
       name: "Exa",
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.15",
       erlc_options: [:verbose, :report_errors, :report_warnings, :export_all],
       start_permanent: Mix.env() == :prod,
@@ -26,7 +26,7 @@ defmodule Exa.MixProject do
     [
       main: "readme",
       output: "doc/api",
-      assets: "assets",
+      assets: %{"assets" => "assets"},
       extras: ["README.md"]
     ]
   end
@@ -45,7 +45,7 @@ defmodule Exa.MixProject do
       {:ex_doc, "~> 0.30", only: [:dev, :test], runtime: false},
 
       # benchmarking
-      {:benchee, "~> 1.0", only: [:dev, :test]},
+      # {:benchee, "~> 1.0", only: [:dev, :test]},
 
       # test data ----------
 

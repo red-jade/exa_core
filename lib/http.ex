@@ -6,6 +6,8 @@ defmodule Exa.Http do
   The primary use case is protoytyping and testing, 
   such as URL definitions (e.g. Google Maps) and 
   compatibility of content parsers.
+
+  Enable `extra_applications: [:ssl, :inets, ...]` in your `Mix.exs` project.
   """
 
   import Exa.Types

@@ -170,8 +170,10 @@ defmodule Exa.Types do
   A parameter for a parametric definition.
   The primitive could be ray, curve, patch or texture. 
 
-  The value 0.0 may be significant as a location.
-  The value 1.0 may be significant as a boundary.
+  The values 0.0,1.0 may be significant,
+  but the type is not restricted to the unit range. 
+  The parametrization may extend outside the unit range.
+  For a constrained type, see `unit`.
   """
   @type param() :: float()
   defguard is_param(t) when is_float(t)

@@ -4,12 +4,14 @@
 
 EXA project index: [exa](https://github.com/red-jade/exa)
 
+Core utilities for built-in types and features.
+
 Module path: `Exa`
 
-Features:
+### Features
 
 - Utilities relating to specific language modules or features:<br>   
-  Binary, File, List, Map, Tuple, Set (MapSet), String,
+  Binary, File, List, Map, Tuple, Set (MapSet), String,<br>
   Text (chardata), Message, Option, Process, Random, System.
   
 - `Indent`: an indentable text output formatter.
@@ -32,15 +34,15 @@ The idea is not to import or alias `Exa` Core,
 but always use the fully qualified module name.
 It is not accidental that `Exa` is a short prefix.
 
-## Testing
+### Testing
 
 The `pkg_json` test dependency requires the `test` environment:
 
 `$ export MIX_ENV=test`
 
-## License
+### License
 
-Exa source code is released under the MIT license.
+EXA source code is released under the MIT license.
 
-Exa code and documentation are:
-Copyright (C) 2024 Mike French
+EXA code and documentation are:
+Copyright (c) 2024 Mike French
