@@ -162,8 +162,21 @@ defmodule Exa.Binary do
   # -------------------
 
   @doc "Convert all of a bitstring to a list of integer bits."
-  @spec bits(E.bits()) :: [E.bit()]
-  def bits(bits), do: do_bits(bits, bit_size(bits), [])
+  @spec to_bits(E.bits()) :: [E.bit()]
+  def to_bits(bits), do: bits |> do_tbits([]) |> Enum.reverse()
+
+  # note no reverse here, so bits are in reverse order
+  @spec do_tbits(E.bits(), [E.bit()]) :: [E.bit()]
+  defp do_tbits(<<b::1, rest::bits>>, bits), do: do_tbits(rest, [b | bits])
+  defp do_tbits(<<>>, bits), do: bits
+
+  @doc "Create a new bitstring from a list of integer bits."
+  @spec from_bits([E.bit()]) :: E.bits()
+  def from_bits(bits), do: do_fbits(bits, <<>>)
+
+  @spec do_fbits([E.bits()], E.bits()) :: E.bits()
+  defp do_fbits([b | bits], out), do: do_fbits(bits, <<out::bits, b::1>>)
+  defp do_fbits([], out), do: out
 
   @doc """
   Take some of a bitstring as a list of integer bits.
@@ -233,6 +246,25 @@ defmodule Exa.Binary do
     <<pre::size(sz)-bits, _::1, post::bits>> = buf
     <<pre::bits, b::1, post::bits>>
   end
+
+  @doc """
+  Reverse a binary as bytes.
+
+  Equivalent to `buf |> to_bytes() |> Enum.reverse() |> from_bytes()`.
+  """
+  @spec reverse_bytes(binary()) :: binary()
+  def reverse_bytes(buf) when is_binary(buf) do
+    # is there a size limit for this hack?
+    sz = bit_size(buf)
+    <<x::size(sz)-integer-little>> = buf
+    <<x::size(sz)-integer-big>>
+  rescue 
+    _ -> buf |> to_bytes() |> Enum.reverse() |> from_bytes()
+  end
+
+  @doc "Reverse a bitstring as bits."
+  @spec reverse_bits(E.bits()) :: E.bits()
+  def reverse_bits(buf), do: buf |> do_tbits([]) |> from_bits()
 
   # ---------------
   # split and merge

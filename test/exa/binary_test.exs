@@ -34,6 +34,21 @@ defmodule Exa.BinaryTest do
     assert 17 = signed_bits(-32769)
   end
 
+  test "bits'n'bytes" do
+    assert <<1::8, 2::8, 3::8>> == from_bytes([1, 2, 3])
+    assert [1, 2, 3] == to_bytes(<<1::8, 2::8, 3::8>>)
+    assert <<3::8, 2::8, 1::8>> == reverse_bytes(<<1::8, 2::8, 3::8>>)
+
+    assert <<0::1, 1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>> ==
+             from_bits([0, 1, 0, 0, 1, 1, 0, 0])
+
+    assert [0, 1, 0, 0, 1, 1, 0, 0] ==
+             to_bits(<<0::1, 1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>>)
+
+    assert <<0::1, 0::1, 1::1, 1::1, 0::1, 0::1, 1::1, 0::1>> ==
+             reverse_bits(<<0::1, 1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>>)
+  end
+
   test "imid" do
     avg(0, 0)
     avg(0, 6)
