@@ -16,11 +16,23 @@ defmodule Exa.File do
 
   @doc """
   Ensure a path directory exists. 
+
+  The argument should be a full filename.
+  If it is a truncated directory name,
+  then it must end with a `'/'` to show it is already a directory,
+  and should not have the last segment stripped off.
+
   Return the directory.
   """
   @spec ensure_dir!(E.filename()) :: E.filename()
   def ensure_dir!(filename) when is_nonempty_string(filename) do
-    dir = Path.dirname(filename)
+    dir =
+      cond do
+        String.ends_with?(filename, "/") -> filename
+        String.ends_with?(filename, "\\") -> filename
+        true -> Path.dirname(filename)
+      end
+
     if not File.exists?(dir), do: File.mkdir_p!(dir)
     dir
   end
