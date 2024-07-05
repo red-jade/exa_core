@@ -100,7 +100,7 @@ defmodule Exa.Types do
 
   # size (length) in bytes or characters
 
-  @typedoc "Byte size."
+  @typedoc "Byte or bit size."
   @type bsize() :: non_neg_integer()
   defguard is_bsize(sz) when is_count(sz, 0)
 
