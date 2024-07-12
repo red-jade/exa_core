@@ -43,7 +43,7 @@ defmodule Exa.File do
   """
   @spec ensure_type(E.filename(), E.filetype()) :: E.filename()
   def ensure_type(filename, type) when is_nonempty_string(filename) do
-    ext = "." <> type
+    ext = "." <> to_string(type)
     if String.ends_with?(filename, ext), do: filename, else: filename <> ext
   end
 

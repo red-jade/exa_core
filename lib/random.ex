@@ -1,6 +1,8 @@
 defmodule Exa.Random do
   @moduledoc "Random utilities."
 
+  import Exa.Types
+
   @doc "Create a random integer between 1 and N."
   @spec rndint(pos_integer()) :: pos_integer()
   def rndint(n) when is_integer(n) and n > 0, do: :rand.uniform(n)
@@ -10,9 +12,7 @@ defmodule Exa.Random do
   excluding a specific value to be avoided.
   """
   @spec rndint(pos_integer(), pos_integer()) :: pos_integer()
-  def rndint(n, avoid)
-      when is_integer(n) and n > 1 and
-             is_integer(avoid) and avoid >= 1 and avoid <= n do
+  def rndint(n, avoid) when is_pos_int(n) and is_in_range(1, avoid, n) do
     case rndint(n) do
       ^avoid -> rndint(n, avoid)
       i -> i
