@@ -1,7 +1,9 @@
 defmodule Exa.System do
   @moduledoc "Utilities for System parameters."
   require Logger
-  
+  import Exa.Types
+  alias Exa.Types, as: E
+
   @doc """
   Get the number of logical processors on the node.
   Logical processors means the number of hardware threads reported by the cpu.
@@ -19,8 +21,8 @@ defmodule Exa.System do
 
   @doc "Get an installed executable path."
   @spec installed(atom() | String.t()) :: nil | E.filename()
-  def installed(exe) when is_atom(exe) or is_string(exe)
-    do exe |> to_string() |> System.find_executable()
+  def installed(exe) when is_atom(exe) or is_string(exe) do
+    exe |> to_string() |> System.find_executable()
   end
 
   @doc """

@@ -5,7 +5,7 @@ defmodule Exa.MixProject do
     [
       app: :exa,
       name: "Exa",
-      version: "0.1.3",
+      version: "0.1.4",
       elixir: "~> 1.15",
       erlc_options: [:verbose, :report_errors, :report_warnings, :export_all],
       start_permanent: Mix.env() == :prod,

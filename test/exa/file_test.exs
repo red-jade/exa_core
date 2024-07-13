@@ -23,6 +23,12 @@ defmodule Exa.FileTest do
     assert "/data/foo.txt.gz" == ensure_type("/data/foo.txt", "gz")
   end
 
+  test "read file error" do
+    dne = "File does not exist"
+    in_file = in_file("xyz", "txt")
+    {:error, %File.Error{path: ^in_file, action: ^dne}} = from_file_lines(in_file)
+  end
+
   test "read file" do
     # default for comments is to trim and filter blank lines
     lines = from_file_lines(in_file("basic", "txt"), comments: ["#", "--", "//"])

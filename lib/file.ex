@@ -42,7 +42,7 @@ defmodule Exa.File do
   Return the possibly modified path.
   """
   @spec ensure_type(E.filename(), E.filetype()) :: E.filename()
-  def ensure_type(filename, type) when is_nonempty_string(filename) do
+  def ensure_type(filename, type) when is_nonempty_string(filename) and is_filetype(type) do
     ext = "." <> to_string(type)
     if String.ends_with?(filename, ext), do: filename, else: filename <> ext
   end
@@ -179,9 +179,11 @@ defmodule Exa.File do
   Any Byte Order Marks (BOMs) are not processed. 
   Consider using `&bom/1` or `&bom!/1` to read and strip the BOM.
   """
-  @spec from_file_binary(E.filename()) :: binary()
+  @spec from_file_binary(E.filename()) :: binary() | {:error, any()}
   def from_file_binary(filename) when is_nonempty_string(filename) do
     filename |> opts_read_path!() |> read_binary()
+  rescue
+    err -> {:error, err}
   end
 
   @doc """
@@ -191,7 +193,7 @@ defmodule Exa.File do
 
   See `&from_file_lines/2` for options.
   """
-  @spec from_file_text(E.filename(), E.options()) :: String.t()
+  @spec from_file_text(E.filename(), E.options()) :: String.t() | {:error, any()}
   def from_file_text(filename, opts \\ []) when is_nonempty_string(filename) do
     params = options(opts, false)
 
@@ -240,7 +242,7 @@ defmodule Exa.File do
   but you may pass `0xFFFD` as the standard 
   Unicode replacement character.
   """
-  @spec from_file_lines(E.filename(), E.options()) :: [String.t()]
+  @spec from_file_lines(E.filename(), E.options()) :: [String.t()] | {:error, any()}
   def from_file_lines(filename, opts \\ []) when is_nonempty_string(filename) do
     params = options(opts, true)
 
@@ -289,9 +291,10 @@ defmodule Exa.File do
   @spec opts_read_path!(E.filename()) :: {E.filename(), [atom(), ...]}
   defp opts_read_path!(filename) do
     if not File.exists?(filename) do
-      msg = "File does not exist: '#{filename}'"
+      dne = "File does not exist"
+      msg = dne <> ": '#{filename}'"
       Logger.error(msg, file: filename)
-      raise ArgumentError, message: msg
+      raise File.Error, path: filename, action: dne
     end
 
     {_dir, _name, types} = split(filename)
@@ -356,10 +359,13 @@ defmodule Exa.File do
   # try to patch UTF8 - slow
 
   @spec recover_error(E.filename(), map(), any()) :: String.t() | [String.t()]
-  defp recover_error(filename, params, err) do
-    Logger.error("Reading file '#{filename}': #{inspect(err)}", file: filename)
+
+  defp recover_error(filename, params,  %UndefinedFunctionError{module: :unicode, function: :format_error}) do
+    Logger.error("Recovering file '#{filename}': unicode format error", file: filename)
     recover_text(filename |> from_file_binary() |> Exa.String.patch_utf8(), params)
   end
+
+  defp recover_error(_filename, _params, err), do: {:error, err}
 
   @spec recover_text(String.t(), map()) :: String.t() | [String.t()]
 

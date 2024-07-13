@@ -258,7 +258,7 @@ defmodule Exa.Binary do
     sz = bit_size(buf)
     <<x::size(sz)-integer-little>> = buf
     <<x::size(sz)-integer-big>>
-  rescue 
+  rescue
     _ -> buf |> to_bytes() |> Enum.reverse() |> from_bytes()
   end
 

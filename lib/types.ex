@@ -275,6 +275,7 @@ defmodule Exa.Types do
 
   defguard is_kv(kv) when is_tuple(kv) and tuple_size(kv) == 2 and is_atom(elem(kv, 0))
 
+  # dialyzer does not like hd() on potentially empty list
   defguard is_keyword(k) when is_list(k) and (k == [] or is_kv(hd(k)))
 
   @type options() :: Keyword.t()
