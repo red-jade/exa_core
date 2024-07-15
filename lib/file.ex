@@ -360,7 +360,10 @@ defmodule Exa.File do
 
   @spec recover_error(E.filename(), map(), any()) :: String.t() | [String.t()]
 
-  defp recover_error(filename, params,  %UndefinedFunctionError{module: :unicode, function: :format_error}) do
+  defp recover_error(filename, params, %UndefinedFunctionError{
+         module: :unicode,
+         function: :format_error
+       }) do
     Logger.error("Recovering file '#{filename}': unicode format error", file: filename)
     recover_text(filename |> from_file_binary() |> Exa.String.patch_utf8(), params)
   end

@@ -1,5 +1,6 @@
 defmodule Exa.ParseTest do
   use ExUnit.Case
+  import Exa.Types
   import Exa.Parse
 
   doctest Exa.Parse
@@ -17,7 +18,7 @@ defmodule Exa.ParseTest do
     par = atom(["foo", "bar", "with_space"])
 
     assert is_nil(par.(nil))
-    assert "" == par.("")
+    assert nil == par.("")
     assert "zoo" == par.("zoo")
 
     assert :foo == par.("foo")
@@ -163,6 +164,24 @@ defmodule Exa.ParseTest do
     assert "2023-12-25" == par.("2023-12-25")
     assert "11:22:33" == par.("11:22:33")
     assert "2023-99-25 25:12:34" == par.("2023-99-25 25:12:34")
+  end
+
+  test "email" do
+    par = email()
+
+    assert is_nil(par.(nil))
+
+    assert is_string(par.("example@foo.com"))
+    assert is_string(par.("'example'@foo.com"))
+    assert is_string(par.("exa.mple-{cool!}@foo-bar.baz.com"))
+
+    assert {:error, _} = par.("examplefoo.com")
+    assert {:error, _} = par.("example@foocom")
+    assert {:error, _} = par.(".example@foo.com")
+    assert {:error, _} = par.("example.@foo.com")
+    assert {:error, _} = par.("exa..mple@foo.com")
+    assert {:error, _} = par.("(example)@foo.com")
+    assert {:error, _} = par.("example@foo.c")
   end
 
   test "guess" do

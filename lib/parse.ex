@@ -14,7 +14,7 @@ defmodule Exa.Parse do
   so the parser functions must consume 
   the whole string to be successful.
   """
-
+  require Logger
   import Exa.Types
   alias Exa.Types, as: E
 
@@ -54,12 +54,26 @@ defmodule Exa.Parse do
   Parse a string as `nil`, or the original string.
 
   All comparisons are case insensitive.
-  Lists of matches should be provided in lower case.
+
+  The default set of null values is:<br> `#{@nulls}`.
   """
   @spec null([String.t()]) :: parfun(nil)
   def null(nulls \\ @nulls) do
-    fn s ->
+    nulls = Enum.map(nulls,&String.downcase/1)
+    fn s when is_string(s) ->
       if String.downcase(s) in nulls, do: nil, else: s
+    end
+  end
+
+  @doc """
+  A no-op parser that passes through a string 
+  if it is valid according to a predicate function.
+  """
+  @spec string(E.predicate?(String.t())) :: parfun(String.t())
+  def string(valid? \\ fn _ -> true end) when is_pred(valid?) do
+    fn
+      nil -> nil
+      s when is_string(s) -> if valid?.(s), do: s, else: {:error, s}
     end
   end
 
@@ -72,14 +86,21 @@ defmodule Exa.Parse do
   The default comparisons can be extended and customized,
   for example, to include `0` and `1` when you know 
   it is a boolean not an integer.
+
+  The default set of `true` values is:<br> `#{@trues}`.
+
+  The default set of `false` values is:<br> `#{@falses}`.
   """
   @spec bool([String.t()], [String.t()]) :: parfun(bool())
   def bool(trues \\ @trues, falses \\ @falses) do
+    trues = Enum.map(trues,&String.downcase/1)
+    falses = Enum.map(falses,&String.downcase/1)
+
     fn
       nil ->
         nil
 
-      str ->
+      str when is_string(str) ->
         s = String.downcase(str)
 
         cond do
@@ -95,27 +116,23 @@ defmodule Exa.Parse do
   Use this for a small set of categorical (enumerated) variables.
 
   `nil` values are passed through unchanged.
-  The string arguments are preprocessed 
-  using the `Exa.String.sanitize!` function.
-  The `maxlen` argument is passed through to the sanitize function.
 
-  ***
-  This has the possibility to fill up the atom table.
-  Only use it for fields that have a small bounded 
-  number of possible string values.
-  *** 
+  The empty string returns `nil`.
   """
-  @spec atom([String.t()], pos_integer()) :: parfun(bool())
-  def atom(values, maxlen \\ 20) do
+  @spec atom([String.t()]) :: parfun(bool())
+  def atom(values) do
+    {values, maxlen} = Enum.reduce(values, {[], 0}, fn v, {vals,maxlen} ->
+       {[String.downcase(v)|vals], max(maxlen, String.length(v))}
+    end)
     fn
       nil ->
         nil
 
       "" ->
-        ""
+        nil
 
-      str ->
-        s = str |> String.downcase() |> Exa.String.sanitize!(maxlen)
+      str when is_string(str) ->
+        s = str |> String.downcase() |> Exa.String.sanitize!(min(maxlen,255))
 
         cond do
           s in values -> String.to_atom(s)
@@ -141,7 +158,7 @@ defmodule Exa.Parse do
           _ -> s
         end
 
-      s ->
+      s when is_string(s) ->
         s
     end
   end
@@ -163,7 +180,7 @@ defmodule Exa.Parse do
       nil ->
         nil
 
-      s ->
+      s when is_string(s) ->
         hex =
           case s do
             <<?#, hex::binary>> -> hex
@@ -197,7 +214,7 @@ defmodule Exa.Parse do
           _ -> s
         end
 
-      s ->
+      s when is_string(s) ->
         s
     end
   end
@@ -213,7 +230,7 @@ defmodule Exa.Parse do
       nil ->
         nil
 
-      s ->
+      s when is_string(s) ->
         case Date.from_iso8601(s, cal) do
           {:ok, date} -> date
           {:error, _reason} -> s
@@ -228,7 +245,7 @@ defmodule Exa.Parse do
       nil ->
         nil
 
-      s ->
+      s when is_string(s) ->
         case Time.from_iso8601(s, cal) do
           {:ok, time} -> time
           {:error, _reason} -> s
@@ -249,7 +266,7 @@ defmodule Exa.Parse do
       nil ->
         nil
 
-      s ->
+      s when is_string(s) ->
         case DateTime.from_iso8601(s, cal) do
           {:ok, time, offset} -> {time, offset}
           {:error, _reason} -> s
@@ -269,10 +286,111 @@ defmodule Exa.Parse do
       nil ->
         nil
 
-      s ->
+      s when is_string(s) ->
         case NaiveDateTime.from_iso8601(s, cal) do
           {:ok, time} -> time
           {:error, _reason} -> s
+        end
+    end
+  end
+
+  @doc "Parse a string as a URI."
+  @spec uri() :: parfun(URI.t())
+  def uri() do
+    fn
+      nil ->
+        nil
+
+      s when is_string(s) ->
+        try do
+          URI.parse(s)
+        rescue
+          err in URI.Error ->
+            Logger.error("URI format error: #{inspect(err)}")
+            {:error, s}
+        end
+    end
+  end
+
+  @doc "Parse a string and validate as an email."
+  @spec email() :: parfun(String.t())
+  def email(), do: string(&email_valid?/1)
+
+  @spec email_valid?(String.t()) :: bool()
+  defp email_valid?(s) when is_string(s) do
+     case String.split(s, "@") do
+          segs when length(segs) != 2 ->
+            Logger.error("Email must contain exactly one '@' character - '#{s}'")
+            false
+
+          [local, domain] ->
+            local_valid?(local) and domain_valid?(domain) 
+    end
+  end
+
+  @local_regex ~r<^[[:alnum:]!#$%&'*+-/=?^_`.{|}~]*$>
+  @host_regex ~r<^[[:alnum:]]+(-[[:alnum:]]+)*$>
+  @tld_regex ~r<^[[:alpha:]]{2,}$>
+
+  @spec local_valid?(String.t()) :: bool()
+  defp local_valid?(local) do
+    cond do
+      not is_in_range(1, String.length(local), 64) ->
+        Logger.error("Email: local part must have 1-64 characters - '#{local}'")
+        false
+
+      String.starts_with?(local, ".") ->
+        Logger.error("Email: local part starts with '.' - '#{local}'")
+        false
+
+      String.ends_with?(local, ".") ->
+        Logger.error("Email: local part ends with '.' - '#{local}'")
+        false
+
+      String.contains?(local, "..") ->
+        Logger.error("Email: local part contains '..' - '#{local}'")
+        false
+
+      not Regex.match?(@local_regex, local) ->
+        Logger.error("Email: local part contains special characters - '#{local}'")
+        false
+
+      true ->
+        true
+    end
+  end
+
+  @spec domain_valid?(String.t()) :: bool()
+  defp domain_valid?(domain) do
+    doms = domain |> String.split(".") |> Enum.reverse()
+
+    cond do
+      not is_in_range(1, String.length(domain), 255) ->
+        Logger.error("Email: domain longer than 255 characters - '#{domain}'")
+        false
+
+      length(doms) < 2 ->
+        Logger.error("Email: domain must have at least 2 segments - '#{domain}'")
+        false
+
+      Enum.any?(doms, &(&1 == "")) ->
+        Logger.error("Email: domain starts/ends with '.' or contains '..' - '#{domain}'")
+        false
+
+      true ->
+        [tld | hosts] = doms
+
+        cond do
+          not Regex.match?(@tld_regex, tld) ->
+            Logger.error("Email: invalid top-level domain - '#{domain}'")
+            false
+
+          not Enum.all?(hosts, &Regex.match?(@host_regex, &1)) ->
+            Logger.error("Email: invalid domain hostname - '#{domain}'")
+            false
+
+          true ->
+            true
         end
     end
   end
