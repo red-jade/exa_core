@@ -1,16 +1,20 @@
 defmodule Exa.File do
   @moduledoc "File utilities."
   require Logger
+  use Exa.Constants
   import Exa.Types
   alias Exa.Types, as: E
 
-  # list of filetypes indicating gzip compression
-  @compress ["gz", "gzip"]
-
   @doc "Test if filetype(s) indicate gzip compression."
   @spec compressed?(E.filetype() | [E.filetype()]) :: bool()
-  def compressed?(type) when is_string(type), do: String.downcase(type) in @compress
+
   def compressed?([]), do: false
+  def compressed?(type) when is_atom(type), do: type in @compress
+
+  def compressed?(type) when is_string(type) do
+    compressed?(type |> String.downcase() |> String.to_atom())
+  end
+
   def compressed?([type]), do: compressed?(type)
   def compressed?(types) when is_list(types), do: compressed?(List.last(types))
 
@@ -156,18 +160,15 @@ defmodule Exa.File do
   def bom(txt), do: {:no_bom, txt}
 
   @doc """
-  Write text data to file in UTF-8 format.
+  Write binary data to file.
   Optionally compress the file using gzip,
   if the filetype is 'gz' or 'gzip'.
   """
-  @spec to_file_text(IO.chardata(), E.filename()) :: IO.chardata()
-  def to_file_text(iodata, filename) when is_nonempty_string(filename) do
-    ensure_dir!(filename)
-    {path, opts} = opts_write_path!(filename)
-    file = File.open!(path, opts)
-    IO.write(file, iodata)
-    File.close(file)
-    iodata
+  @spec to_file_binary(binary(), E.filename()) :: E.filename() | {:error, any()}
+  def to_file_binary(bin, filename) when is_binary(bin) do
+    filename |> fopts_write_path!(false) |> write_binary(bin)
+  rescue
+    err -> {:error, err}
   end
 
   @doc """
@@ -180,10 +181,78 @@ defmodule Exa.File do
   Consider using `&bom/1` or `&bom!/1` to read and strip the BOM.
   """
   @spec from_file_binary(E.filename()) :: binary() | {:error, any()}
-  def from_file_binary(filename) when is_nonempty_string(filename) do
-    filename |> opts_read_path!() |> read_binary()
+  def from_file_binary(filename) when is_filename(filename) do
+    filename |> fopts_read_path!(false) |> read_binary()
   rescue
     err -> {:error, err}
+  end
+
+  @doc """
+  Compress a file. Write the compressed file to the output directory.
+  If the output directory is `nil`, default to the input directory.
+
+  Return the output name of the compressed binary file.
+  The file will be given a `".#{hd(@compress)}"` filetype suffix.
+  """
+  @spec compress(E.filename(), nil | E.filename()) :: E.filename() | {:error, any()}
+  def compress(filename, outdir \\ nil)
+      when is_filename(filename) and
+             (is_nil(outdir) or is_filename(outdir)) do
+    {dir, name, types} = split(filename)
+    outdir = if is_nil(outdir), do: dir, else: outdir
+
+    cond do
+      compressed?(types) ->
+        {:error, "File is already compressed: '#{filename}'"}
+
+      true ->
+        outfile = join(outdir, name, types ++ [hd(@compress)])
+
+        case from_file_binary(filename) do
+          {:error, _} = err -> err
+          bin -> to_file_binary(bin, outfile)
+        end
+    end
+  end
+
+  @doc """
+  Decompress a file. Write the decompressed file to the output directory.
+  If the output directory is `nil`, default to the input directory.
+
+  Return the output name of the decompressed binary file.
+  The file will be given a `".#{hd(@compress)}"` filetype suffix.
+  """
+  @spec decompress(E.filename(), nil | E.filename()) :: E.filename()
+  def decompress(filename, outdir \\ nil) when is_filename(filename) and is_filename(outdir) do
+    {dir, name, types} = split(filename)
+    outdir = if is_nil(outdir), do: dir, else: outdir
+    ntype = length(types)
+
+    if not compressed?(types) do
+      {:error, "File is not compressed: '#{filename}'"}
+    else
+      outfile = join(outdir, name, Enum.take(types, ntype - 1))
+
+      case from_file_binary(filename) do
+        {:error, _} = err -> err
+        bin -> to_file_binary(bin, outfile)
+      end
+    end
+  end
+
+  @doc """
+  Write text data to file in UTF-8 format.
+  Optionally compress the file using gzip,
+  if the filetype is 'gz' or 'gzip'.
+  """
+  @spec to_file_text(IO.chardata(), E.filename()) :: IO.chardata()
+  def to_file_text(iodata, filename) when is_nonempty_string(filename) do
+    ensure_dir!(filename)
+    {path, fopts} = fopts_write_path!(filename, true)
+    file = File.open!(path, fopts)
+    IO.write(file, iodata)
+    File.close(file)
+    iodata
   end
 
   @doc """
@@ -198,7 +267,7 @@ defmodule Exa.File do
     params = options(opts, false)
 
     try do
-      case filename |> opts_read_path!() |> read_utf8(params) do
+      case filename |> fopts_read_path!(true) |> read_utf8(params) do
         str when is_string(str) -> bom!(str)
         {:error, err} -> recover_error(filename, params, err)
       end
@@ -247,7 +316,7 @@ defmodule Exa.File do
     params = options(opts, true)
 
     try do
-      case filename |> opts_read_path!() |> read_utf8(params) do
+      case filename |> fopts_read_path!(true) |> read_utf8(params) do
         [] -> []
         [line | lines] -> [bom!(line) | lines]
         {:error, err} -> recover_error(filename, params, err)
@@ -287,9 +356,9 @@ defmodule Exa.File do
   @spec format([E.filetype()]) :: String.t()
   defp format(types), do: types |> Enum.map(&String.upcase/1) |> Enum.join(" ")
 
-  # validate a read and build options
-  @spec opts_read_path!(E.filename()) :: {E.filename(), [atom(), ...]}
-  defp opts_read_path!(filename) do
+  # validate a read, and build options
+  @spec fopts_read_path!(E.filename(), bool()) :: {E.filename(), [atom(), ...]}
+  defp fopts_read_path!(filename, text?) do
     if not File.exists?(filename) do
       dne = "File does not exist"
       msg = dne <> ": '#{filename}'"
@@ -298,39 +367,66 @@ defmodule Exa.File do
     end
 
     {_dir, _name, types} = split(filename)
-    opts = if compressed?(types), do: [:read, :compressed], else: [:read]
+    fopts = [:read]
+    fopts = if compressed?(types), do: [:compressed | fopts], else: fopts
+    fopts = if text?, do: [:utf8 | fopts], else: [:binary | fopts]
     Logger.info("Read #{format(types)} file: '#{Path.basename(filename)}'", file: filename)
-    {filename, opts}
+    {filename, fopts}
   end
 
-  # validate a write and build options
-  @spec opts_write_path!(E.filename()) :: {E.filename(), [atom(), ...]}
-  defp opts_write_path!(filename) do
+  # validate a write, and build options
+  @spec fopts_write_path!(E.filename(), bool()) :: {E.filename(), [atom(), ...]}
+  defp fopts_write_path!(filename, text?) do
     {dir, name, types} = split(filename)
     ensure_dir!(dir)
     Logger.info("Write #{format(types)} file: '#{Path.basename(filename)}'", file: filename)
     # remove illegal punctuation, convert space to '_', truncate for file system
     name = Exa.String.sanitize!(name, 200, true)
     path = join(dir, name, types)
-    opts = [:utf8, :write]
-    opts = if compressed?(types), do: [:compressed | opts], else: opts
-    {path, opts}
+    fopts = [:write]
+    fopts = if compressed?(types), do: [:compressed | fopts], else: fopts
+    fopts = if text?, do: [:utf8 | fopts], else: [:binary | fopts]
+    {path, fopts}
   end
 
   # read binary, compare expected and actual size
-  @spec read_binary({E.filename(), [atom()]}) :: binary()
-  defp read_binary({filename, opts}) do
+  @spec read_binary({E.filename(), [atom()]}) :: binary() | {:error, any()}
+  defp read_binary({filename, fopts}) do
     # no comments, and don't require lines, so just read binary string
-    {:ok, stat} = File.stat(filename)
-    exp = stat.size
-    buf = filename |> File.open!(opts) |> IO.binread(:eof)
-    act = byte_size(buf)
 
-    if exp != act do
-      Logger.warning("Read size mismatch, expecting #{exp}, read #{act}", file: filename)
+    case filename |> File.open!(fopts) |> IO.binread(:eof) do
+      {:error, _} = err ->
+        err
+
+      buf when is_binary(buf) ->
+        if :compressed not in fopts do
+          {:ok, stat} = File.stat(filename)
+          exp = stat.size
+          act = byte_size(buf)
+
+          if exp != act do
+            Logger.warning("Read size mismatch, expect #{exp}, found #{act}", file: filename)
+          end
+        end
+
+        buf
+    end
+  end
+
+  # write binary, compare final and actual size for compressed output
+  @spec write_binary({E.filename(), [atom()]}, binary()) :: E.filename()
+  defp write_binary({filename, fopts}, bin) do
+    file = File.open!(filename, fopts)
+    :ok = IO.binwrite(file, bin)
+    File.close(file)
+
+    if :compressed in fopts do
+      {:ok, stat} = File.stat(filename)
+      comp = round(100.0 * stat.size / byte_size(bin))
+      Logger.info("Compression #{comp}% of original size", file: filename)
     end
 
-    buf
+    filename
   end
 
   # read text 
@@ -342,7 +438,7 @@ defmodule Exa.File do
          %{:comments => [], :trim => false, :blank => false, :split => false}
        ) do
     # no comments, and don't require lines, so just read utf8 string
-    path |> File.open!([:utf8 | opts]) |> IO.read(:eof)
+    path |> File.open!(opts) |> IO.read(:eof)
   end
 
   defp read_utf8(
@@ -350,7 +446,7 @@ defmodule Exa.File do
          %{:comments => comms, :trim => trim?, :blank => blank?, :split => split?}
        ) do
     path
-    |> File.stream!([:utf8 | opts], :line)
+    |> File.stream!(opts, :line)
     |> trim(trim?)
     |> filter(blank?, comms)
     |> splits(split?)

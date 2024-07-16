@@ -46,6 +46,16 @@ defmodule Exa.FileTest do
     |> to_file_text(out_file("basic", ["txt", "gz"]))
   end
 
+  test "compress decompress" do
+    outdir = Path.join(@out_dir)
+    txt = in_file("tomats", "txt")
+    assert Path.join(["test", "input", "txt", "tomats.txt"]) == txt
+    gz = compress(txt, outdir)
+    assert Path.join(["test", "output", "txt", "tomats.txt.gz"]) == gz
+    txt = decompress(gz, outdir)
+    assert Path.join(["test", "output", "txt", "tomats.txt"]) == txt
+  end
+
   test "read file no comments" do
     # no comments means default false for trim and filter blank
     lines = from_file_lines(in_file("basic", "txt"))

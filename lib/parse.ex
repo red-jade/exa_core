@@ -59,7 +59,8 @@ defmodule Exa.Parse do
   """
   @spec null([String.t()]) :: parfun(nil)
   def null(nulls \\ @nulls) do
-    nulls = Enum.map(nulls,&String.downcase/1)
+    nulls = Enum.map(nulls, &String.downcase/1)
+
     fn s when is_string(s) ->
       if String.downcase(s) in nulls, do: nil, else: s
     end
@@ -93,8 +94,8 @@ defmodule Exa.Parse do
   """
   @spec bool([String.t()], [String.t()]) :: parfun(bool())
   def bool(trues \\ @trues, falses \\ @falses) do
-    trues = Enum.map(trues,&String.downcase/1)
-    falses = Enum.map(falses,&String.downcase/1)
+    trues = Enum.map(trues, &String.downcase/1)
+    falses = Enum.map(falses, &String.downcase/1)
 
     fn
       nil ->
@@ -121,9 +122,11 @@ defmodule Exa.Parse do
   """
   @spec atom([String.t()]) :: parfun(bool())
   def atom(values) do
-    {values, maxlen} = Enum.reduce(values, {[], 0}, fn v, {vals,maxlen} ->
-       {[String.downcase(v)|vals], max(maxlen, String.length(v))}
-    end)
+    {values, maxlen} =
+      Enum.reduce(values, {[], 0}, fn v, {vals, maxlen} ->
+        {[String.downcase(v) | vals], max(maxlen, String.length(v))}
+      end)
+
     fn
       nil ->
         nil
@@ -132,7 +135,7 @@ defmodule Exa.Parse do
         nil
 
       str when is_string(str) ->
-        s = str |> String.downcase() |> Exa.String.sanitize!(min(maxlen,255))
+        s = str |> String.downcase() |> Exa.String.sanitize!(min(maxlen, 255))
 
         cond do
           s in values -> String.to_atom(s)
@@ -318,13 +321,13 @@ defmodule Exa.Parse do
 
   @spec email_valid?(String.t()) :: bool()
   defp email_valid?(s) when is_string(s) do
-     case String.split(s, "@") do
-          segs when length(segs) != 2 ->
-            Logger.error("Email must contain exactly one '@' character - '#{s}'")
-            false
+    case String.split(s, "@") do
+      segs when length(segs) != 2 ->
+        Logger.error("Email must contain exactly one '@' character - '#{s}'")
+        false
 
-          [local, domain] ->
-            local_valid?(local) and domain_valid?(domain) 
+      [local, domain] ->
+        local_valid?(local) and domain_valid?(domain)
     end
   end
 

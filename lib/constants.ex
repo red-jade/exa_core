@@ -23,6 +23,10 @@ defmodule Exa.Constants do
       @filetype_txt :txt
       @filetype_md :md
 
+      # list of filetypes indicating gzip compression
+      # the head of the list is used for output
+      @compress [:gz, :gzip]
+
       # character sets for end-of-line and whitespace
 
       @ascii_eol [?\n, ?\r, ?\f, ?\v]
