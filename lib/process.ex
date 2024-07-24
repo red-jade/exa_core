@@ -37,8 +37,16 @@ defmodule Exa.Process do
   end
 
   @doc "Get the messages waiting in the inbox."
-  @spec message_box() :: list()
-  def message_box(), do: self() |> Process.info(:messages) |> elem(1)
+  @spec msg_box() :: list()
+  def msg_box(), do: self() |> Process.info(:messages) |> elem(1)
+
+  @doc "Get the number of messages waiting in the inbox."
+  @spec msg_box_len() :: E.count0()
+  def msg_box_len(), do: self() |> Process.info(:message_queue_len) |> elem(1)
+
+  @doc "Get the memory size of the process."
+  @spec mem_sz() :: E.bsize()
+  def mem_sz(), do: self() |> Process.info(:memory) |> elem(1)
 
   @doc """
   Get a value from the process dictionary.
