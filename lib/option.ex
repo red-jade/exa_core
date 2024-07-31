@@ -6,6 +6,16 @@ defmodule Exa.Option do
   depending on what happens when the option is set to an invalid value:
    - the `!` version raises an error 
    - the unadorned version substitutes the default value
+
+  Note that the default must conform to the type 
+  if the option is unset, 
+  but not if it is set to an illegal value.
+  So a workaround (hack) to get nullable types is to:
+  - set the default to `nil`
+  - allow the option to be `nil`, never unset
+  - then the option gets `nil`, 
+    which fails the type test,
+    but the default `nil` is substituted
   """
 
   import Exa.Types
@@ -29,9 +39,21 @@ defmodule Exa.Option do
   end
 
   @spec get_atom(Keyword.t(), atom(), atom()) :: atom()
-  def get_atom(opts, key, default \\ false) do
+  def get_atom(opts, key, default \\ nil) do
     opt = Keyword.get(opts, key, default)
     if is_atom(opt), do: opt, else: default
+  end
+
+  @spec get_enum!(Keyword.t(), atom(), [atom()]) :: atom()
+  def get_enum!(opts, key, enums) do
+    opt = Keyword.get(opts, key)
+    if is_atom(opt) and opt in enums, do: opt, else: error("enum", key, opt)
+  end
+
+  @spec get_enum(Keyword.t(), atom(), [atom()], atom()) :: atom()
+  def get_enum(opts, key, enums, default \\ nil) do
+    opt = Keyword.get(opts, key, default)
+    if is_atom(opt) and opt in enums, do: opt, else: default
   end
 
   @spec get_char!(Keyword.t(), atom()) :: char()

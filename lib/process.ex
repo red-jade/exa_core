@@ -6,6 +6,7 @@ defmodule Exa.Process do
   """
 
   import Exa.Types
+  alias Exa.Types, as: E
 
   # -----
   # types
@@ -41,7 +42,7 @@ defmodule Exa.Process do
   def msg_box(), do: self() |> Process.info(:messages) |> elem(1)
 
   @doc "Get the number of messages waiting in the inbox."
-  @spec msg_box_len() :: E.count0()
+  @spec msg_box_len() :: E.count()
   def msg_box_len(), do: self() |> Process.info(:message_queue_len) |> elem(1)
 
   @doc "Get the memory size of the process."
@@ -64,6 +65,14 @@ defmodule Exa.Process do
         value
     end
   end
+
+  @doc """
+  Delete an entry from the process dictionary.
+
+  See `Process.delete/1`.
+  """
+  @spec delete(any()) :: nil | any()
+  def delete(key), do: Process.delete(key)
 
   @doc "Register a process in a namespace."
   @spec register!(ns(), nsseg(), pid()) :: nskey()

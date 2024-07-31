@@ -7,6 +7,11 @@ defmodule Exa.Constants do
 
   defmacro __using__(_) do
     quote do
+      # default fields for parsing null and boolean values
+      @nulls ["", "nil", "null", "nan", "inf"]
+      @falses ["false", "f"]
+      @trues ["true", "t"]
+
       # default locale
       @default_locale_name "en_US"
       @default_locale {:en, :US, nil, nil}

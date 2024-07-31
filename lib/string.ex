@@ -554,10 +554,14 @@ defmodule Exa.String do
   end
 
   @doc """
-  Convert a general string to a valid filename.
+  Convert a general string to a valid filename or atom.
 
   Trim and convert all internal runs of whitespace to a single '_'.
+
   Optionally truncate the name at a maximum length.
+  Passing `:infinity` will not truncate the string.
+  The default `maxlen` is 250, which is just under the limit
+  for files and atoms.
 
   If the name is being used for a file,
   the argument should not contain the '.' filetype suffix.
@@ -569,7 +573,7 @@ defmodule Exa.String do
   making `foo.txt.gz`, allows the decompressed file to appear as `foo.txt`.
   """
   @spec sanitize!(String.t(), E.maybe(E.count1()), bool()) :: String.t()
-  def sanitize!(str, maxlen \\ nil, allow_safe_file? \\ false)
+  def sanitize!(str, maxlen \\ 250, allow_safe_file? \\ false)
       when is_binary(str) and (maxlen == nil or is_count1(maxlen)) do
     filter_fun = if allow_safe_file?, do: &is_filechar/1, else: &is_namechar/1
 

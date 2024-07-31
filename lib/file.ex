@@ -41,6 +41,18 @@ defmodule Exa.File do
     dir
   end
 
+  @doc "Ensure that a file exists."
+  @spec ensure_file(E.filename()) :: :ok
+  defp ensure_file!(file) do
+    if not File.exists?(vfile) do
+      dne = "File does not exist"
+      msg = dne <> ": '#{file}'"
+      Logger.error(msg, file: file)
+      raise File.Error, path: file, action: dne
+    end
+    :ok
+  end
+
   @doc """
   Ensure that a path ends with the required filetype. 
   Return the possibly modified path.
@@ -223,7 +235,8 @@ defmodule Exa.File do
   The file will be given a `".#{hd(@compress)}"` filetype suffix.
   """
   @spec decompress(E.filename(), nil | E.filename()) :: E.filename()
-  def decompress(filename, outdir \\ nil) when is_filename(filename) and is_filename(outdir) do
+  def decompress(filename, outdir \\ nil)
+      when is_filename(filename) and (is_nil(outdir) or is_filename(outdir)) do
     {dir, name, types} = split(filename)
     outdir = if is_nil(outdir), do: dir, else: outdir
     ntype = length(types)

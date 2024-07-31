@@ -6,7 +6,7 @@ defmodule Exa.ParseTest do
   doctest Exa.Parse
 
   test "nil" do
-    par = null()
+    par = p_null()
 
     assert is_nil(par.(""))
     assert is_nil(par.("null"))
@@ -15,7 +15,7 @@ defmodule Exa.ParseTest do
   end
 
   test "atom" do
-    par = atom(["foo", "bar", "with_space"])
+    par = p_atom(["foo", "bar", "with_space"])
 
     assert is_nil(par.(nil))
     assert nil == par.("")
@@ -33,7 +33,7 @@ defmodule Exa.ParseTest do
   end
 
   test "bool" do
-    par = bool()
+    par = p_bool()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -49,7 +49,7 @@ defmodule Exa.ParseTest do
 
     assert "baz" == par.("baz")
 
-    par = bool(["1"], ["0"])
+    par = p_bool(["1"], ["0"])
 
     assert true == par.("1")
     assert false == par.("0")
@@ -59,7 +59,7 @@ defmodule Exa.ParseTest do
   end
 
   test "int" do
-    par = int()
+    par = p_int()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -74,7 +74,7 @@ defmodule Exa.ParseTest do
   end
 
   test "hex" do
-    par = hex()
+    par = p_hex()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -91,7 +91,7 @@ defmodule Exa.ParseTest do
   end
 
   test "float" do
-    par = float()
+    par = p_float()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -107,7 +107,7 @@ defmodule Exa.ParseTest do
   end
 
   test "date" do
-    par = date()
+    par = p_date()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -119,7 +119,7 @@ defmodule Exa.ParseTest do
   end
 
   test "time" do
-    par = time()
+    par = p_time()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -134,7 +134,7 @@ defmodule Exa.ParseTest do
   end
 
   test "naive datetime" do
-    par = naive_datetime()
+    par = p_naive_datetime()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -149,7 +149,7 @@ defmodule Exa.ParseTest do
   end
 
   test "datetime" do
-    par = datetime()
+    par = p_datetime()
 
     assert is_nil(par.(nil))
     assert "" == par.("")
@@ -167,7 +167,7 @@ defmodule Exa.ParseTest do
   end
 
   test "email" do
-    par = email()
+    par = p_email()
 
     assert is_nil(par.(nil))
 
@@ -185,7 +185,7 @@ defmodule Exa.ParseTest do
   end
 
   test "guess" do
-    par = guess()
+    par = p_guess()
 
     assert is_nil(par.("null"))
 
@@ -211,7 +211,7 @@ defmodule Exa.ParseTest do
   end
 
   test "array" do
-    par = array()
+    par = p_array()
 
     assert [""] == par.("")
 
@@ -220,7 +220,7 @@ defmodule Exa.ParseTest do
     assert ["foo", "bar", "baz"] == par.(" foo ,\n bar ,\n baz ")
     assert ["foo bar", "baz"] == par.(" foo bar , baz")
 
-    par = array(delim: "/", parnull: null(), filter: false)
+    par = p_array(delim: "/", parnull: p_null(), filter: false)
 
     assert [nil] == par.("")
 
@@ -228,14 +228,14 @@ defmodule Exa.ParseTest do
     assert ["foo, bar, baz"] == par.("foo, bar, baz")
     assert ["foo", nil, nil, nil, "bar"] == par.("foo//null/NaN/bar")
 
-    par = array(delim: [":", ";"], parnull: null(), filter: true)
+    par = p_array(delim: [":", ";"], parnull: p_null(), filter: true)
 
     assert [] == par.("")
 
     assert ["foo", "bar", "baz"] == par.("foo:bar;baz")
     assert ["foo", "bar"] == par.("foo::null;NaN;bar")
 
-    par = array(delim: ":", parnull: null(), filter: false, pardata: int())
+    par = p_array(delim: ":", parnull: p_null(), filter: false, pardata: p_int())
 
     assert [nil] == par.("")
 

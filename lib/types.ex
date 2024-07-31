@@ -92,7 +92,8 @@ defmodule Exa.Types do
   @type index0() :: non_neg_integer()
   defguard is_index0(i) when is_count(i, 0)
 
-  defguard is_index0(i, ls) when is_list(ls) and is_integer(i) and is_in_range(0, i, length(ls)-1)
+  defguard is_index0(i, ls)
+           when is_list(ls) and is_integer(i) and is_in_range(0, i, length(ls) - 1)
 
   @typedoc "1-based index."
   @type index1() :: pos_integer()
@@ -375,6 +376,9 @@ defmodule Exa.Types do
   defmodule ReturnValueError do
     defexception message: "Function returned an error value."
   end
+
+  @doc "Test if a return value is an error tuple."
+  defguard is_err(err) when is_tag_tuple(err, 2, :error)
 
   @typedoc """
   Function return value.

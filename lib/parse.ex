@@ -15,24 +15,13 @@ defmodule Exa.Parse do
   the whole string to be successful.
   """
   require Logger
+
+  use Exa.Constants
+
   import Exa.Types
   alias Exa.Types, as: E
 
   alias Exa.Option
-  # alias Exa.Gis.Location
-
-  # ---------
-  # constants
-  # ---------
-
-  # the default set of null values
-  @nulls ["", "nil", "null", "nan", "inf"]
-
-  # the default set of false values
-  @falses ["false", "f"]
-
-  # the default set of true values
-  @trues ["true", "t"]
 
   # -----
   # types
@@ -51,14 +40,17 @@ defmodule Exa.Parse do
   # ----------------
 
   @doc """
-  Parse a string as `nil`, or the original string.
+  Parse a nullable string.
+  The result will be `nil` or the original string.
 
   All comparisons are case insensitive.
 
-  The default set of null values is:<br> `#{@nulls}`.
+  The default set of null values is:
+
+  `#{@nulls}`.
   """
-  @spec null([String.t()]) :: parfun(nil)
-  def null(nulls \\ @nulls) do
+  @spec p_null([String.t()]) :: parfun(nil)
+  def p_null(nulls \\ @nulls) do
     nulls = Enum.map(nulls, &String.downcase/1)
 
     fn s when is_string(s) ->
@@ -66,12 +58,23 @@ defmodule Exa.Parse do
     end
   end
 
+  @doc "A no-op parser that passes through a string."
+  @spec p_string() :: parfun(String.t())
+  def p_string() do
+    fn
+      nil -> nil
+      s when is_string(s) -> s
+    end
+  end
+
   @doc """
-  A no-op parser that passes through a string 
+  A parser that passes through a string 
   if it is valid according to a predicate function.
+
+  There is no type conversion, just a validation.
   """
-  @spec string(E.predicate?(String.t())) :: parfun(String.t())
-  def string(valid? \\ fn _ -> true end) when is_pred(valid?) do
+  @spec p_string(E.predicate?(String.t())) :: parfun(String.t())
+  def p_string(valid?) when is_pred(valid?) do
     fn
       nil -> nil
       s when is_string(s) -> if valid?.(s), do: s, else: {:error, s}
@@ -82,18 +85,21 @@ defmodule Exa.Parse do
   Parse a string to a boolean.
   `nil` values are passed through unchanged.
   All comparisons are case insensitive.
-  Lists of matches should be provided in lower case.
 
   The default comparisons can be extended and customized,
   for example, to include `0` and `1` when you know 
   it is a boolean not an integer.
 
-  The default set of `true` values is:<br> `#{@trues}`.
+  The default set of `true` values is:
 
-  The default set of `false` values is:<br> `#{@falses}`.
+  `#{@trues}`.
+
+  The default set of `false` values is:
+
+  `#{@falses}`.
   """
-  @spec bool([String.t()], [String.t()]) :: parfun(bool())
-  def bool(trues \\ @trues, falses \\ @falses) do
+  @spec p_bool([String.t()], [String.t()]) :: parfun(bool())
+  def p_bool(trues \\ @trues, falses \\ @falses) do
     trues = Enum.map(trues, &String.downcase/1)
     falses = Enum.map(falses, &String.downcase/1)
 
@@ -113,15 +119,19 @@ defmodule Exa.Parse do
   end
 
   @doc """
-  Parse a string to an atom.
+  Parse a string to one of an enumerated list of atoms.
   Use this for a small set of categorical (enumerated) variables.
+
+  Input string arguments are downsized, sanitized 
+  and truncated to at most 255 characters.
+  See `Exa.String.sanitize!/3` for more details.
 
   `nil` values are passed through unchanged.
 
   The empty string returns `nil`.
   """
-  @spec atom([String.t()]) :: parfun(bool())
-  def atom(values) do
+  @spec p_atom([String.t()]) :: parfun(bool())
+  def p_atom(values) do
     {values, maxlen} =
       Enum.reduce(values, {[], 0}, fn v, {vals, maxlen} ->
         {[String.downcase(v) | vals], max(maxlen, String.length(v))}
@@ -149,8 +159,8 @@ defmodule Exa.Parse do
 
   `nil` values are passed through unchanged.
   """
-  @spec int() :: parfun(integer())
-  def int() do
+  @spec p_int() :: parfun(integer())
+  def p_int() do
     fn
       nil ->
         nil
@@ -177,8 +187,8 @@ defmodule Exa.Parse do
   The final result is a single integer value, 
   not a color array (see _Gfx.Color.Col3b_).
   """
-  @spec hex() :: parfun(non_neg_integer())
-  def hex() do
+  @spec p_hex() :: parfun(non_neg_integer())
+  def p_hex() do
     fn
       nil ->
         nil
@@ -205,8 +215,8 @@ defmodule Exa.Parse do
 
   `nil` values are passed through unchanged.
   """
-  @spec float() :: parfun(float())
-  def float() do
+  @spec p_float() :: parfun(float())
+  def p_float() do
     fn
       nil ->
         nil
@@ -227,8 +237,8 @@ defmodule Exa.Parse do
 
   `nil` values are passed through unchanged.
   """
-  @spec date(Calendar.calendar()) :: parfun(Date.t())
-  def date(cal \\ Calendar.ISO) do
+  @spec p_date(Calendar.calendar()) :: parfun(Date.t())
+  def p_date(cal \\ Calendar.ISO) do
     fn
       nil ->
         nil
@@ -242,8 +252,8 @@ defmodule Exa.Parse do
   end
 
   @doc "Parse a string as an ISO 8601 Time."
-  @spec time(Calendar.calendar()) :: parfun(Time.t())
-  def time(cal \\ Calendar.ISO) do
+  @spec p_time(Calendar.calendar()) :: parfun(Time.t())
+  def p_time(cal \\ Calendar.ISO) do
     fn
       nil ->
         nil
@@ -262,9 +272,9 @@ defmodule Exa.Parse do
   The string must contain timezone or offset information.
   The result is a UTC `DateTime` together with an offset in seconds.
   """
-  @spec datetime(Calendar.calendar() | :extended | :basic) ::
+  @spec p_datetime(Calendar.calendar() | :extended | :basic) ::
           parfun({DateTime.t(), non_neg_integer()})
-  def datetime(cal \\ Calendar.ISO) do
+  def p_datetime(cal \\ Calendar.ISO) do
     fn
       nil ->
         nil
@@ -283,8 +293,8 @@ defmodule Exa.Parse do
   If the string contains timezone or offset information, 
   it is ignored, and the result is always a `NaiveDateTime`.
   """
-  @spec naive_datetime(Calendar.calendar()) :: parfun(NaiveDateTime.t())
-  def naive_datetime(cal \\ Calendar.ISO) do
+  @spec p_naive_datetime(Calendar.calendar()) :: parfun(NaiveDateTime.t())
+  def p_naive_datetime(cal \\ Calendar.ISO) do
     fn
       nil ->
         nil
@@ -298,8 +308,8 @@ defmodule Exa.Parse do
   end
 
   @doc "Parse a string as a URI."
-  @spec uri() :: parfun(URI.t())
-  def uri() do
+  @spec p_uri() :: parfun(URI.t())
+  def p_uri() do
     fn
       nil ->
         nil
@@ -316,8 +326,99 @@ defmodule Exa.Parse do
   end
 
   @doc "Parse a string and validate as an email."
-  @spec email() :: parfun(String.t())
-  def email(), do: string(&email_valid?/1)
+  @spec p_email() :: parfun(String.t())
+  def p_email(), do: p_string(&email_valid?/1)
+
+  @doc """
+  Return a composed parser that tries several 
+  parsers to find the scalar data type.
+
+  Tries null, bool, int, float, date, time, datetime, naive_datetime.
+  Note hex integers are not included, 
+  because there is ambiguity with base-10 integers.
+
+  Also see `Exa.Gis.Location.p_guess/4`.
+  """
+  @spec p_guess([String.t()], [String.t()], [String.t()], Calendar.calendar()) :: parfun(any())
+  def p_guess(nulls \\ @nulls, trues \\ @trues, falses \\ @falses, cal \\ Calendar.ISO) do
+    # slow ..... many ways to optimize this ...
+    # count delimiters; test numstart and numchars, etc.
+    compose([
+      p_null(nulls),
+      p_bool(trues, falses),
+      p_int(),
+      p_float(),
+      p_date(cal),
+      p_time(cal),
+      p_datetime(cal),
+      p_naive_datetime(cal)
+    ])
+  end
+
+  @doc """
+  Return a parser that splits a string into an array of strings.
+  The parser does not handle escapes and quotation.
+  The string tokens are then optionally trimmed, 
+  processed into `nil` values, filtered, 
+  and converted to a specific known data type.
+
+  The options are:
+  - `:delim` one or more string delimiters (see `String.split()`),
+    defaults to comma `","`
+  - `:trim` flag to indicate trimming tokens of whitespace
+    (note this is _not_ the same meaning as `String.split()`),
+    defaults to `true`
+  - `:parnull` optional null parser to convert empty string and other values to `nil` 
+  - `:filter` flag to filter `nil` tokens after trimming and conversion: 
+    remove `nil` (filter `true`); or pass through (filter `false`, default)
+  - `:pardata` optional data parser to convert non-`nil` values to a data value
+  """
+  @spec p_array(E.options()) :: parfun([any()])
+  def p_array(opts \\ []) do
+    delim = Keyword.get(opts, :delim, ",")
+    trim? = Option.get_bool(opts, :trim, true)
+    parnull = Option.get_fun(opts, :parnull, nil)
+    filter? = Option.get_bool(opts, :filter, false)
+    pardata = Option.get_fun(opts, :pardata, nil)
+
+    fn
+      nil ->
+        nil
+
+      s when is_string(s) ->
+        s
+        |> String.trim()
+        |> String.split(delim)
+        |> trim(trim?)
+        |> par(parnull)
+        |> filter(filter?)
+        |> par(pardata)
+    end
+  end
+
+  # TODO - really need tag tuple return types
+  # because of pass through string validation (e.g. email)
+
+  @doc """
+  Generate a parser from a list of parsers. 
+
+  Pass through `nil` and non-strings,
+  otherwise try the next parser in the sequence.
+  """
+  @spec compose([parfun(any())]) :: parfun(any())
+  def compose(parsers) when is_list(parsers), do: fn s -> do_par(s, parsers) end
+
+  defp do_par(nil, _), do: nil
+  defp do_par(s, [par | parsers]) when is_string(s), do: do_par(par.(s), parsers)
+  defp do_par(d, _parsers), do: d
+
+  # -----------------
+  # private functions
+  # -----------------
+
+  @local_regex ~r<^[[:alnum:]!#$%&'*+-/=?^_`.{|}~]*$>
+  @host_regex ~r<^[[:alnum:]]+(-[[:alnum:]]+)*$>
+  @tld_regex ~r<^[[:alpha:]]{2,}$>
 
   @spec email_valid?(String.t()) :: bool()
   defp email_valid?(s) when is_string(s) do
@@ -330,10 +431,6 @@ defmodule Exa.Parse do
         local_valid?(local) and domain_valid?(domain)
     end
   end
-
-  @local_regex ~r<^[[:alnum:]!#$%&'*+-/=?^_`.{|}~]*$>
-  @host_regex ~r<^[[:alnum:]]+(-[[:alnum:]]+)*$>
-  @tld_regex ~r<^[[:alpha:]]{2,}$>
 
   @spec local_valid?(String.t()) :: bool()
   defp local_valid?(local) do
@@ -395,87 +492,6 @@ defmodule Exa.Parse do
           true ->
             true
         end
-    end
-  end
-
-  @doc """
-  Return a composed parser that tries several 
-  parsers to find the scalar data type.
-
-  Tries null, bool, int, float, date, time, datetime, naive_datetime
-  and the various formats of `Location`.
-
-  Note hex integers are not included, 
-  because there is ambiguity with base-10 integers.
-  """
-  @spec guess([String.t()], [String.t()], [String.t()], Calendar.calendar()) :: parfun(any())
-  def guess(nulls \\ @nulls, trues \\ @trues, falses \\ @falses, cal \\ Calendar.ISO) do
-    # slow ..... many ways to optimize this ...
-    # count delimiters; test numstart and numchars, etc.
-    compose([
-      null(nulls),
-      bool(trues, falses),
-      int(),
-      float(),
-      date(cal),
-      time(cal),
-      datetime(cal),
-      naive_datetime(cal)
-      # , &Location.parse/1
-    ])
-  end
-
-  @doc """
-  Generate a parser from a list of parsers. 
-
-  Pass through `nil` and non-strings,
-  otherwise try the next parser in the sequence.
-  """
-  @spec compose([parfun(any())]) :: parfun(any())
-  def compose(parsers) when is_list(parsers), do: fn s -> do_par(s, parsers) end
-
-  defp do_par(nil, _), do: nil
-  defp do_par(s, [par | parsers]) when is_string(s), do: do_par(par.(s), parsers)
-  defp do_par(d, _parsers), do: d
-
-  @doc """
-  Return a parser that splits a string into an array of strings.
-  The parser does not handle escapes and quotation.
-  The string tokens are then optionally trimmed, 
-  processed into `nil` values, filtered, 
-  and converted to a specific known data type.
-
-  The options are:
-  - `:delim` one or more string delimiters (see `String.split()`),
-    defaults to comma `","`
-  - `:trim` flag to indicate trimming tokens of whitespace
-    (note this is _not_ the same meaning as `String.split()`),
-    defaults to `true`
-  - `:parnull` optional null parser to convert empty string and other values to `nil` 
-  - `:filter` flag to filter `nil` tokens after trimming and conversion: 
-    remove `nil` (filter `true`); or pass through (filter `false`, default)
-  - `:pardata` optional data parser to convert non-`nil` values to a data value
-  """
-  @spec array(E.options()) :: parfun([any()])
-  def array(opts \\ []) do
-    delim = Keyword.get(opts, :delim, ",")
-    trim? = Option.get_bool(opts, :trim, true)
-    parnull = Option.get_fun(opts, :parnull, nil)
-    filter? = Option.get_bool(opts, :filter, false)
-    pardata = Option.get_fun(opts, :pardata, nil)
-
-    fn
-      nil ->
-        nil
-
-      s when is_string(s) ->
-        s
-        |> String.trim()
-        |> String.split(delim)
-        |> trim(trim?)
-        |> par(parnull)
-        |> filter(filter?)
-        |> par(pardata)
     end
   end
 
