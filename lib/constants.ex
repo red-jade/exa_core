@@ -32,6 +32,12 @@ defmodule Exa.Constants do
       # the head of the list is used for output
       @compress [:gz, :gzip]
 
+      # empty set
+      @empty_set MapSet.new()
+
+      # standard form for an empty range
+      @empty_range 0..1//-1
+
       # character sets for end-of-line and whitespace
 
       @ascii_eol [?\n, ?\r, ?\f, ?\v]

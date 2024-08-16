@@ -5,11 +5,11 @@ defmodule Exa.MixProject do
     [
       app: :exa,
       name: "Exa",
-      version: "0.1.5",
+      version: "0.1.7",
       elixir: "~> 1.15",
       erlc_options: [:verbose, :report_errors, :report_warnings, :export_all],
       start_permanent: Mix.env() == :prod,
-      deps: deps(),
+      deps: deps()++deps(:support),
       docs: docs(),
       test_pattern: "*_test.exs",
       dialyzer: [flags: [:no_improper_lists]]
@@ -31,11 +31,15 @@ defmodule Exa.MixProject do
     ]
   end
 
-  defp deps do
+  # runtime code dependencies ----------
+  defp deps() do
     [
-      # runtime code dependencies ----------
       # ... tumbleweed ...
+    ]
+  end
 
+  defp deps(:support) do
+    [
       # building, documenting, testing ----------
 
       # typechecking

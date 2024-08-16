@@ -19,37 +19,64 @@ defmodule Exa.File do
   def compressed?(types) when is_list(types), do: compressed?(List.last(types))
 
   @doc """
-  Ensure a path directory exists. 
+  Ensure a directory path exists. 
 
-  The argument should be a full filename.
-  If it is a truncated directory name,
-  then it must end with a `'/'` to show it is already a directory,
-  and should not have the last segment stripped off.
+  The path must be a directory name, not a full file name.
 
-  Return the directory.
+  Raises an error if the directory could not be created.
+
+  Returns the argument unchanged.
   """
   @spec ensure_dir!(E.filename()) :: E.filename()
-  def ensure_dir!(filename) when is_nonempty_string(filename) do
-    dir =
-      cond do
-        String.ends_with?(filename, "/") -> filename
-        String.ends_with?(filename, "\\") -> filename
-        true -> Path.dirname(filename)
-      end
+  def ensure_dir!(path) when is_filename(path) do
+    cond do
+      File.dir?(path) ->
+        path
 
-    if not File.exists?(dir), do: File.mkdir_p!(dir)
-    dir
+      File.exists?(path) ->
+        Logger.warning(
+          "Name of existing file passed to 'ensure_dir!', " <>
+            "please use 'ensure_parent!' instead"
+        )
+
+        path
+
+      true ->
+        :ok = File.mkdir_p!(path)
+        path
+    end
   end
 
-  @doc "Ensure that a file exists."
-  @spec ensure_file(E.filename()) :: :ok
-  defp ensure_file!(file) do
-    if not File.exists?(vfile) do
-      dne = "File does not exist"
-      msg = dne <> ": '#{file}'"
-      Logger.error(msg, file: file)
-      raise File.Error, path: file, action: dne
+  @doc """
+  Ensure the parent directory of a file exists. 
+
+  The path must be a full file name.
+
+  Raises an error if the directory could not be created.
+
+  Return the directory path.
+  """
+  @spec ensure_parent!(E.filename()) :: E.filename()
+  def ensure_parent!(path) when is_filename(path) do
+    if File.exists?(path) do
+      path
+    else
+      dir = Path.dirname(path)
+      File.mkdir_p!(dir)
+      dir
     end
+  end
+
+  @doc "Ensure that a file or directory path exists."
+  @spec ensure_file!(E.filename()) :: :ok
+  def ensure_file!(path) when is_filename(path) do
+    if not File.exists?(path) do
+      dne = "File does not exist"
+      msg = dne <> ": '#{path}'"
+      Logger.error(msg, file: path)
+      raise File.Error, path: path, action: dne
+    end
+
     :ok
   end
 
@@ -58,7 +85,7 @@ defmodule Exa.File do
   Return the possibly modified path.
   """
   @spec ensure_type(E.filename(), E.filetype()) :: E.filename()
-  def ensure_type(filename, type) when is_nonempty_string(filename) and is_filetype(type) do
+  def ensure_type(filename, type) when is_filename(filename) and is_filetype(type) do
     ext = "." <> to_string(type)
     if String.ends_with?(filename, ext), do: filename, else: filename <> ext
   end
@@ -84,7 +111,7 @@ defmodule Exa.File do
       "foo/html/../css/my.css"
   """
   @spec resolve(E.filename(), E.filename()) :: E.filename()
-  def resolve(ref, base \\ "") when is_nonempty_string(ref) and is_string(base) do
+  def resolve(ref, base \\ "") when is_filename(ref) and is_string(base) do
     case Path.type(ref) do
       :relative -> base |> Path.dirname() |> Path.join(ref) |> Path.relative_to_cwd()
       _ -> Path.relative_to_cwd(ref)
@@ -94,11 +121,18 @@ defmodule Exa.File do
   @doc """
   Split a file path into directory, filename and zero or more filetypes.
 
-  If there is no directory segment, the `dir` result will be "." 
+  If the full path is an existing directory,
+  or appears to be a directory, 
+  because it ends with a directory delimiter,
+  then the whole path will be returned as the `dir` result,
+  and the filename and filetype will be empty.
+
+  If there is no directory segment in the path, 
+  the `dir` result will be "." 
   (default current directory).
 
   The filetypes are the segments following periods '.'.
-  If there is no period, the filetypes are empty `[]`.
+  If there is no period, the filetypes will be empty `[]`.
   Multiple filetypes are provided, so that compressed files 
   have their underlying filetype recognized.
 
@@ -111,20 +145,19 @@ defmodule Exa.File do
       {"/usr/share/fonts/X11", "font", ["pcf", "gz"]}
   """
   @spec split(E.filename()) :: {dir :: Path.t(), name :: E.filename(), types :: [E.filetype()]}
-  def split(filename) when is_nonempty_string(filename) do
-    dir = Path.dirname(filename)
-
-    # manually test for a directory that ends with / (unix) or \ (windows)
-    name =
-      if String.ends_with?(filename, "/") or String.ends_with?(filename, "\\") do
-        ""
-      else
-        Path.basename(filename)
-      end
-
-    [name | types] = String.split(name, ".")
-    {dir, name, types}
+  def split(path) when is_filename(path) do
+    if File.dir?(path) or dir_name?(path) do
+      {path, "", []}
+    else
+      dir = Path.dirname(path)
+      [name | types] = path |> Path.basename() |> String.split(".")
+      {dir, name, types}
+    end
   end
+
+  # hack to test if a path ends in a directory delimiter
+  @spec dir_name?(E.filename()) :: bool()
+  defp dir_name?(path), do: String.ends_with?(path, ["/", "\\"])
 
   @doc """
   Merge path segments into a filename.
@@ -255,12 +288,14 @@ defmodule Exa.File do
 
   @doc """
   Write text data to file in UTF-8 format.
+
+  Returns the text argument.
+
   Optionally compress the file using gzip,
   if the filetype is 'gz' or 'gzip'.
   """
   @spec to_file_text(IO.chardata(), E.filename()) :: IO.chardata()
-  def to_file_text(iodata, filename) when is_nonempty_string(filename) do
-    ensure_dir!(filename)
+  def to_file_text(iodata, filename) when is_filename(filename) do
     {path, fopts} = fopts_write_path!(filename, true)
     file = File.open!(path, fopts)
     IO.write(file, iodata)
@@ -276,7 +311,7 @@ defmodule Exa.File do
   See `&from_file_lines/2` for options.
   """
   @spec from_file_text(E.filename(), E.options()) :: String.t() | {:error, any()}
-  def from_file_text(filename, opts \\ []) when is_nonempty_string(filename) do
+  def from_file_text(filename, opts \\ []) when is_filename(filename) do
     params = options(opts, false)
 
     try do
@@ -325,7 +360,7 @@ defmodule Exa.File do
   Unicode replacement character.
   """
   @spec from_file_lines(E.filename(), E.options()) :: [String.t()] | {:error, any()}
-  def from_file_lines(filename, opts \\ []) when is_nonempty_string(filename) do
+  def from_file_lines(filename, opts \\ []) when is_filename(filename) do
     params = options(opts, true)
 
     try do
@@ -383,7 +418,7 @@ defmodule Exa.File do
     fopts = [:read]
     fopts = if compressed?(types), do: [:compressed | fopts], else: fopts
     fopts = if text?, do: [:utf8 | fopts], else: [:binary | fopts]
-    Logger.info("Read #{format(types)} file: '#{Path.basename(filename)}'", file: filename)
+    Logger.info("Read  #{format(types)} file: '#{Path.basename(filename)}'", file: filename)
     {filename, fopts}
   end
 
@@ -467,7 +502,8 @@ defmodule Exa.File do
 
   # try to patch UTF8 - slow
 
-  @spec recover_error(E.filename(), map(), any()) :: String.t() | [String.t()]
+  @spec recover_error(E.filename(), map(), any()) :: 
+     String.t() | [String.t()] | {:error, any()}
 
   defp recover_error(filename, params, %UndefinedFunctionError{
          module: :unicode,

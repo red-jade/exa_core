@@ -22,6 +22,8 @@ Module path: `Exa`
 
 - `Factory`: for structs built by data parsers.
 
+- `Dispatch`: _protocol_ dispatcher for tagged tuples
+
 - `Stopwatch`: for simple timing and benchmarking tasks.
 
 - Trivial functions for `Http`, `Logger`.

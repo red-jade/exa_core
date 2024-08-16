@@ -26,6 +26,8 @@ defmodule Exa.Map do
   Accumulate a sorted list of keys that map to the same value.
 
   ## Examples:
+      iex> Exa.Map.invert(%{})
+      %{}
       iex> Exa.Map.invert( %{1 => 2, 2 => 3, 3 => 1, 4 => 2} )
       %{1 => [3], 2 => [1,4], 3 => [2]}
   """

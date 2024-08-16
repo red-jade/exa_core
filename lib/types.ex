@@ -60,6 +60,10 @@ defmodule Exa.Types do
 
   defguard is_odd(i) when is_integer(i) and (i &&& 0x01) == 1
 
+  defguard is_range(r) when is_struct(r, Range)
+
+  defguard is_pos_range(r) when is_range(r) and r.first > 0
+
   defguard is_range(imin, imax) when is_integer(imin) and is_integer(imax) and imin <= imax
 
   # assume the limits have already been checked: is_range(imin,imax)
@@ -92,6 +96,7 @@ defmodule Exa.Types do
   @type index0() :: non_neg_integer()
   defguard is_index0(i) when is_count(i, 0)
 
+  # test a valid 0-based index into a list
   defguard is_index0(i, ls)
            when is_list(ls) and is_integer(i) and is_in_range(0, i, length(ls) - 1)
 
@@ -288,6 +293,8 @@ defmodule Exa.Types do
 
   defguard is_fix_tuple(tup, n) when is_nonneg_int(n) and is_tuple(tup) and tuple_size(tup) == n
 
+  defguard is_tag_tuple(tup, tag) when is_tuple(tup) and elem(tup, 0) == tag
+
   defguard is_tag_tuple(tup, n, tag) when is_fix_tuple(tup, n) and elem(tup, 0) == tag
 
   # map ----------
@@ -299,8 +306,6 @@ defmodule Exa.Types do
   # set ----------
 
   defguard is_set(s) when is_struct(s, MapSet)
-
-  @empty_set MapSet.new()
 
   defguard is_empty_set(s) when is_set(s) and s == @empty_set
 
