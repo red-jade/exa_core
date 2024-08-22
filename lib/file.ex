@@ -502,8 +502,8 @@ defmodule Exa.File do
 
   # try to patch UTF8 - slow
 
-  @spec recover_error(E.filename(), map(), any()) :: 
-     String.t() | [String.t()] | {:error, any()}
+  @spec recover_error(E.filename(), map(), any()) ::
+          String.t() | [String.t()] | {:error, any()}
 
   defp recover_error(filename, params, %UndefinedFunctionError{
          module: :unicode,

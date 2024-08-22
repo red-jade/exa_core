@@ -22,7 +22,7 @@ Module path: `Exa`
 
 - `Factory`: for structs built by data parsers.
 
-- `Dispatch`: _protocol_ dispatcher for tagged tuples
+- `Dispatch`: _protocol_ dispatcher for tagged tuples.
 
 - `Stopwatch`: for simple timing and benchmarking tasks.
 
@@ -42,9 +42,19 @@ The `pkg_json` test dependency requires the `test` environment:
 
 `$ export MIX_ENV=test`
 
+If you do not set 'test' environment, you will see the error:
+
+```
+make: *** No rule to make target 'json.old', needed by 'old.txt'.  Stop.
+** (Mix) Could not compile dependency :pkg_json, "make" command failed. 
+Errors may have been logged above. 
+You can recompile this dependency with "mix deps.compile pkg_json --force", 
+update it with "mix deps.update pkg_json" or clean it with "mix deps.clean pkg_json"
+```
+
 ### License
 
 EXA source code is released under the MIT license.
 
-EXA code and documentation are:
+EXA code and documentation are:<br>
 Copyright (c) 2024 Mike French
