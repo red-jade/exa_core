@@ -77,22 +77,20 @@ defmodule Exa.Core.MixProject do
       exa_args = Enum.map([:exa, scope | libs], &to_string/1)
 
       case System.cmd("mix", exa_args) do
-        {_out, 0} ->
-          :ok
-
-        {out, n} ->
-          args = Enum.join(exa_args, " ")
-          raise RuntimeError, message: "Failed 'mix #{args}' status #{n} '#{out}'"
-      end
-
-      if not File.exists?(deps_path) do
-        raise RuntimeError, message: "Cannot create dependency file: #{deps_path}"
+        {_msg, 0} -> :ok
+        {_, _} -> IO.puts("Failed 'mix exa' dependency task")
       end
     end
 
-    deps = deps_path |> Code.eval_file() |> elem(0)
+    deps =
+      if File.exists?(deps_path) do
+        deps_path |> Code.eval_file() |> elem(0)
+      else
+        IO.puts("No exa dependency file: #{deps_path}")
+        []
+      end
 
-    if String.starts_with?(cmd, ["deps", "compile"]) do
+    if deps != [] and String.starts_with?(cmd, ["deps", "compile"]) do
       IO.inspect(deps, label: "#{name} #{scope}")
     end
 

@@ -38,7 +38,8 @@ It is not accidental that `Exa` is a short prefix.
 
 ## Building
 
-**To bootstrap a build, first run:** `mix deps.get exa`
+To bootstrap an `exa_xxx` library build, 
+you must run `mix deps.get` twice.
 
 ## Testing
 
