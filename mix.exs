@@ -52,15 +52,19 @@ defmodule Exa.Core.MixProject do
   # ---------------------------
 
   # main entry point for dependencies
-  defp exa_deps(name, libs), do: System.argv() |> hd() |> do_deps(name, libs)
+  # bootstrap with 'mix deps.get exa'
+  defp exa_deps(name, libs) do
+    case System.argv() do
+      ["exa" | _] -> [exa_project()]
+      ["format" | _] -> [exa_project()]
+      ["deps.get", "exa" | _] -> [exa_project()]
+      ["deps.clean" | _] -> do_clean()
+      [cmd | _] -> do_deps(cmd, name, libs)
+    end
+  end
 
-  defp do_deps("exa", _name, _libs), do: [exa_project()]
-
-  defp do_deps("deps.clean", _name, _libs) do
-    Enum.each([:local, :main, :tag], fn scope ->
-      scope |> deps_file() |> File.rm()
-    end)
-
+  defp do_clean() do
+    Enum.each([:local, :main, :tag], fn s -> s |> deps_file() |> File.rm() end)
     [exa_project()]
   end
 

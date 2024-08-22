@@ -1,4 +1,4 @@
-## EXA Core
+# EXA Core
 
 𝔼𝕏tr𝔸 𝔼li𝕏ir 𝔸dditions (𝔼𝕏𝔸)
 
@@ -8,7 +8,7 @@ Core utilities for built-in types and features.
 
 Module path: `Exa`
 
-### Features
+## Features
 
 - Utilities relating to specific language modules or features:<br>   
   Binary, File, List, Map, Tuple, Set (MapSet), String,<br>
@@ -36,7 +36,11 @@ The idea is not to import or alias `Exa` Core,
 but always use the fully qualified module name.
 It is not accidental that `Exa` is a short prefix.
 
-### Testing
+## Building
+
+**To bootstrap a build, first run:** `mix deps.get exa`
+
+## Testing
 
 The `pkg_json` test dependency requires the `test` environment:
 
@@ -52,7 +56,7 @@ You can recompile this dependency with "mix deps.compile pkg_json --force",
 update it with "mix deps.update pkg_json" or clean it with "mix deps.clean pkg_json"
 ```
 
-### License
+## EXA License
 
 EXA source code is released under the MIT license.
 
