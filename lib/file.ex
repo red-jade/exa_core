@@ -104,11 +104,11 @@ defmodule Exa.File do
       iex> resolve("/foo/bar.pdf")
       "/foo/bar.pdf"
       iex> resolve("bar.pdf")
-      "./bar.pdf"
+      "bar.pdf"
       iex> resolve("./bar.pdf", "./foo/")
-      "./foo/./bar.pdf"
+      "foo/bar.pdf"
       iex> resolve("../css/my.css", "foo/html/")
-      "foo/html/../css/my.css"
+      "foo/css/my.css"
   """
   @spec resolve(E.filename(), E.filename()) :: E.filename()
   def resolve(ref, base \\ "") when is_filename(ref) and is_string(base) do
@@ -505,9 +505,8 @@ defmodule Exa.File do
   @spec recover_error(E.filename(), map(), any()) ::
           String.t() | [String.t()] | {:error, any()}
 
-  defp recover_error(filename, params, %UndefinedFunctionError{
-         module: :unicode,
-         function: :format_error
+  defp recover_error(filename, params, %IO.StreamError{
+         reason: {:no_translation, :unicode, :unicode}
        }) do
     Logger.error("Recovering file '#{filename}': unicode format error", file: filename)
     recover_text(filename |> from_file_binary() |> Exa.String.patch_utf8(), params)

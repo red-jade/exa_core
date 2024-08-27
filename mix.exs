@@ -1,9 +1,9 @@
 defmodule Exa.Core.MixProject do
   use Mix.Project
 
-  @lib  :exa_core
+  @lib :exa_core
   @name "Exa Core"
-  @ver  "0.2.1"
+  @ver "0.2.2"
 
   # umbrella project
   @exa {:exa,
@@ -21,6 +21,7 @@ defmodule Exa.Core.MixProject do
         if not Code.loaded?(Exa.MixUtil) do
           [{Exa.MixUtil, _}] = Code.compile_file(@mix_util)
         end
+
         Exa.MixUtil.exa_deps(@lib, exa_libs())
       else
         # bootstrap
@@ -31,10 +32,10 @@ defmodule Exa.Core.MixProject do
       app: @lib,
       name: @name,
       version: @ver,
-      elixir: "~> 1.15",
+      elixir: "~> 1.17",
       erlc_options: [:verbose, :report_errors, :report_warnings, :export_all],
       start_permanent: Mix.env() == :prod,
-      deps: [@exa|exa_deps] ++ local_deps(),
+      deps: [@exa | exa_deps] ++ local_deps(),
       docs: docs(),
       test_pattern: "*_test.exs",
       dialyzer: [flags: [:no_improper_lists]]

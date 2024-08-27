@@ -8,7 +8,6 @@ defmodule Exa.StopwatchTest do
     start = start()
     Process.sleep(1_000)
     dt = elapsed(start)
-    assert start > 0
     assert dt > 1_000
   end
 

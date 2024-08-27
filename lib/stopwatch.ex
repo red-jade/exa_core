@@ -22,8 +22,6 @@ defmodule Exa.Stopwatch do
 
   # types
 
-  # time in microseconds
-  @type duration() :: E.time_micros()
   @type average_duration() :: {float(), :milliseconds}
 
   # memory in bytes
@@ -43,16 +41,29 @@ defmodule Exa.Stopwatch do
   # public functions
   # ----------------
 
-  @doc "Get the current `now` time value in microseconds."
+  @doc """
+  Get the current `now` time value in microseconds.
+
+  Note that since Erlang OTP 26,
+  this value can be negative.
+  """
   @spec now() :: E.time_micros()
   def now(), do: :erlang.monotonic_time(:microsecond)
 
-  @doc "Get the start time at current `now` time."
+  @doc """
+  Get the start time at current `now` time.
+
+  Note that since Erlang OTP 26,
+  this value can be negative.
+  """
   @spec start() :: E.time_micros()
   def start(), do: now()
 
-  @doc "Get the elapsed time since a previous call to `now()`."
-  @spec elapsed(E.time_micros()) :: duration()
+  @doc """
+  Get the elapsed time since a previous call to `now()`.
+  The value may ybe zero.
+  """
+  @spec elapsed(E.time_micros()) :: E.duration_micros()
   def elapsed(start), do: now() - start
 
   @doc """

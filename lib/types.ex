@@ -129,10 +129,19 @@ defmodule Exa.Types do
   @type timeout1() :: pos_integer()
   defguard is_timeout1(t) when is_integer(t) and t > 0
 
-  @typedoc "Monotonic microsecond clock time and durations."
-  @type time_micros() :: non_neg_integer()
+  @typedoc """
+  Microsecond clock time.
 
-  @typedoc "Conventional millisecond time and durations (sleep, after, etc.)."
+  The value taken from `:erlang.monotonic_time`.
+  Note that since Erlang OTP 26,
+  this value can be negative.
+  """
+  @type time_micros() :: integer()
+
+  @typedoc "Microsecond elapsed duration."
+  @type duration_micros() :: non_neg_integer()
+
+  @typedoc "Conventional millisecond times and durations (sleep, after, etc.)."
   @type time_millis() :: non_neg_integer()
 
   defguard is_time(t) when is_integer(t) and t >= 0

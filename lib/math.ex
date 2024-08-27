@@ -38,7 +38,8 @@ defmodule Exa.Math do
   defp isgn(i) when i > 0, do: 1
   defp isgn(_), do: -1
 
-  defp fsgn(0.0), do: 0
+  defp fsgn(+0.0), do: 0
+  defp fsgn(-0.0), do: 0
   defp fsgn(x) when x > 0.0, do: 1
   defp fsgn(_), do: -1
 

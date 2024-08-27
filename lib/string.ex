@@ -348,7 +348,7 @@ defmodule Exa.String do
   ## Examples
       iex> count( "11-17-2020", ?- )
       2
-      iex> count( "11-17-2020 12:23:45", '-:' )
+      iex> count( "11-17-2020 12:23:45", ~c"-:" )
       4
   """
   @spec count(String.t(), char() | charlist()) :: E.count()
@@ -598,13 +598,13 @@ defmodule Exa.String do
   with the replacement character.
 
     ## Examples
-      iex> replace_any("", 'c1', ?_)
+      iex> replace_any("", ~c"c1", ?_)
       ""
-      iex> replace_any("abc123", '', ?_)
+      iex> replace_any("abc123", ~c"", ?_)
       "abc123"
-      iex> replace_any("abc123", 'c1', ?_)
+      iex> replace_any("abc123", [?c,?1], ?_)
       "ab__23"
-      iex> replace_any("abc3211x1yzc", 'c1', ?_)
+      iex> replace_any("abc3211x1yzc", ~c"c1", ?_)
       "ab_32__x_yz_"
   """
   @spec replace_any(String.t(), charlist(), char()) :: String.t()
@@ -631,11 +631,11 @@ defmodule Exa.String do
   The specials argument should be charlist of characters.
 
   ## Examples
-      iex> escape( "a+b?c*", '+?*' )
+      iex> escape( "a+b?c*", [?+, ??, ?*] )
       ~S"a\+b\?c\*"
-      iex> escape( "'a'", ~c(') )
+      iex> escape( "'a'", ~c"'" )
       ~S"\'a\'"
-      iex> escape( ~S"a\nb", '\\' )
+      iex> escape( ~S"a\nb", ~c"\\" )
       ~S"a\\nb"
   """
   @spec escape(String.t(), charlist()) :: String.t()
