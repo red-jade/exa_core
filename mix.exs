@@ -52,7 +52,7 @@ defmodule Exa.Core.MixProject do
     [
       main: "readme",
       output: "doc/api",
-      assets: "assets",
+      assets: %{"assets" => "assets"},
       extras: ["README.md"]
     ]
   end
