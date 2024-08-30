@@ -68,7 +68,14 @@ defmodule Exa.Core.MixProject do
       # test data ----------
       # JSON files for testing compression (no code)
       # needs 'export MIX_ENV=test'
-      {:pkg_json, git: "https://github.com/pkg/json.git", only: :dev, runtime: false, app: false}
+      {
+        :pkg_json, 
+        git: "https://github.com/pkg/json.git", 
+        branch: "main",
+        only: :dev, 
+        runtime: false, 
+        app: false
+      }
     ]
   end
 end
