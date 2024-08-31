@@ -40,6 +40,17 @@ defmodule Exa.Types do
 
   defguard is_module(m) when is_atom(m)
 
+  # range ----------
+
+  defguard is_range(r) when is_struct(r, Range)
+
+  defguard is_pos_range(r) when is_range(r) and r.first > 0
+
+  defguard is_range(imin, imax) when is_integer(imin) and is_integer(imax) and imin <= imax
+
+  # assume the limits have already been checked: is_range(imin,imax)
+  defguard is_in_range(imin, i, imax) when is_integer(i) and imin <= i and i <= imax
+
   # bit ----------
 
   @type bit() :: 0 | 1
@@ -48,7 +59,7 @@ defmodule Exa.Types do
 
   # byte ----------
 
-  defguard is_byte(b) when is_integer(b) and 0 <= b and b <= 255
+  defguard is_byte(b) when is_in_range(0, b, 255)
 
   # integer ----------
 
@@ -59,15 +70,6 @@ defmodule Exa.Types do
   defguard is_even(i) when is_integer(i) and (i &&& 0x01) == 0
 
   defguard is_odd(i) when is_integer(i) and (i &&& 0x01) == 1
-
-  defguard is_range(r) when is_struct(r, Range)
-
-  defguard is_pos_range(r) when is_range(r) and r.first > 0
-
-  defguard is_range(imin, imax) when is_integer(imin) and is_integer(imax) and imin <= imax
-
-  # assume the limits have already been checked: is_range(imin,imax)
-  defguard is_in_range(imin, i, imax) when is_integer(i) and imin <= i and i <= imax
 
   @typedoc "Percent value limited to the range [0,100]."
   @type percent() :: 0..100
@@ -97,8 +99,7 @@ defmodule Exa.Types do
   defguard is_index0(i) when is_count(i, 0)
 
   # test a valid 0-based index into a list
-  defguard is_index0(i, ls)
-           when is_list(ls) and is_integer(i) and is_in_range(0, i, length(ls) - 1)
+  defguard is_index0(i, ls) when is_list(ls) and is_in_range(0, i, length(ls) - 1)
 
   @typedoc "1-based index."
   @type index1() :: pos_integer()
