@@ -27,7 +27,7 @@ defmodule Exa.Dispatch do
     - tagged tuple (tag, tuple type and a guard)
     - module that implements the behaviour 
   - dispatch map associating each tag with a module
-  - union type defined to be one of the tagged tuples
+  - union type defined to be one of the tags or tagged tuples
     that is used for the API behaviour signatures
   - library interface module that implements the behaviour
     and dispatches calls to a specific module using the _dispatcher_
@@ -36,11 +36,26 @@ defmodule Exa.Dispatch do
 
   ## Dispatching
 
-  There are two cases for dispatching:
-  - constructors that build a new tagged tuple instance:
-    dispatch on an explicit tag (no tuple) 
-  - functions of an existing tagged tuple instance:
-    dispatch on the first element of the tuple
+  There are three cases for dispatching:
+  - Constructors that build a new tagged tuple instance:
+    dispatch on an explicit tag; no tuple argument; tuple return type.
+  - Functions of an existing tagged tuple instance:
+    dispatch on the first element of the tuple; pass tuple argument.
+  - Functions with separate tag _and_ untagged data:
+    dispatch on tag; pass data as just another argument.
+
+  The use case for untagged data, is when there's a 
+  list of untagged data items, 
+  and one tag applies to the whole collection.
+  Not putting the tag in every tuple saves space for long lists
+  (e.g. colors, spatial points).
+
+  Note that the _untagged data_ can be any datatype, not just a tuple. 
+  The argument is not type checked. 
+  For example, some implementations might pass a single value,
+  rather than a singleton tuple, to save space and time
+  (e.g. RGB color is a 3-tuple, but GRAY color is just a byte value,
+  not a tuple with one byte element).
 
   ## See Also
 
@@ -108,6 +123,8 @@ defmodule Exa.Dispatch do
   # ----------
 
   # return type is generic, so cannot use dialyzer
+
+  @doc "Dispatch tagged tuple."
   @spec dispatch(dispatcher(), tag() | tag_tuple(), fun_name(), args()) :: any()
   def dispatch(dispatcher, tag_or_tuple, fun_name, args \\ [])
 
