@@ -23,21 +23,19 @@ defmodule Exa.Map do
   @doc """
   Invert a general map. 
 
-  Accumulate a sorted list of keys that map to the same value.
+  Accumulate a unsorted list of keys that map to the same value.
 
   ## Examples:
       iex> Exa.Map.invert(%{})
       %{}
       iex> Exa.Map.invert( %{1 => 2, 2 => 3, 3 => 1, 4 => 2} )
-      %{1 => [3], 2 => [1,4], 3 => [2]}
+      %{1 => [3], 2 => [4,1], 3 => [2]}
   """
   @spec invert(%{a => b}) :: %{b => [a, ...]} when a: var, b: var
   def invert(map) when is_map(map) do
-    map
-    |> Enum.reduce(%{}, fn {k, v}, m ->
+    Enum.reduce(map, %{}, fn {k, v}, m ->
       Map.update(m, v, [k], fn ks -> [k | ks] end)
     end)
-    |> map(&Enum.sort/1)
   end
 
   @doc """
