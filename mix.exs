@@ -3,7 +3,7 @@ defmodule Exa.Core.MixProject do
 
   @lib :exa_core
   @name "Exa Core"
-  @ver "0.2.4"
+  @ver "0.2.5"
 
   # umbrella project
   @exa {:exa,
@@ -69,11 +69,11 @@ defmodule Exa.Core.MixProject do
       # JSON files for testing compression (no code)
       # needs 'export MIX_ENV=test'
       {
-        :pkg_json, 
-        git: "https://github.com/pkg/json.git", 
+        :pkg_json,
+        git: "https://github.com/pkg/json.git",
         branch: "main",
-        only: :dev, 
-        runtime: false, 
+        only: :dev,
+        runtime: false,
         app: false
       }
     ]
