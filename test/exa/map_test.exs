@@ -23,7 +23,8 @@ defmodule Exa.MapTest do
     assert %{1 => ["a"], 2 => ["b"], 3 => ["c"]} == invert(bij)
 
     multi = %{:a => 1, :b => 1, :c => 3}
-    assert %{1 => [:b, :a], 3 => [:c]} == invert(multi)
+    assert %{1 => ab, 3 => [:c]} = invert(multi)
+    assert [:a, :b] == Enum.sort(ab)
   end
 
   test "key" do
