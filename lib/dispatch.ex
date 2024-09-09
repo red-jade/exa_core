@@ -146,7 +146,7 @@ defmodule Exa.Dispatch do
       when is_map(disp) and
              (is_atom(tag_or_tup) or is_tuple(tag_or_tup)) do
     tag = if is_tuple(tag_or_tup), do: elem(tag_or_tup, 0), else: tag_or_tup
-    msg = "Failed dispatch: tag '#{tag}' not key in #{disp}"
+    msg = "Failed dispatch: tag '#{tag}' not key in #{inspect(disp)}"
     Logger.error(msg)
     raise ArgumentError, message: msg
   end
