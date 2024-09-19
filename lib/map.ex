@@ -90,4 +90,32 @@ defmodule Exa.Map do
       end
     end)
   end
+
+  @doc """
+  Pick one entry from a map.
+
+  Return the key-value pair, 
+  and the remaining map with the key removed.
+
+  If the map is empty, return error.
+
+  Assume the Axiom of Choice :)
+
+  ## Examples
+
+      iex> Exa.Map.pick( %{1 => 2, 2 => 3, 3 => 2} )
+      {{1, 2}, %{2 => 3, 3 => 2}}
+
+      iex> Exa.Map.pick( %{} )
+      {:error, "Empty map"}
+  """
+  @spec pick(map()) :: {{any(), any()}, map()} | {:error, any()}
+  def pick(m) do
+    if map_size(m) == 0 do
+      {:error, "Empty map"}
+    else
+      [{k, _} = entry] = Enum.take(m, 1)
+      {entry, Map.delete(m, k)}
+    end
+  end
 end
