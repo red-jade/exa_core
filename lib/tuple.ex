@@ -21,15 +21,15 @@ defmodule Exa.Tuple do
 
   @doc "Sum a tuple."
   @spec sum(tuple()) :: number()
-  def sum(tup) when is_nonempty_tuple(tup), do: reduce(tup, 0, &Kernel.+/2)
+  def sum(tup) when is_tuple_nonempty(tup), do: reduce(tup, 0, &Kernel.+/2)
 
   @doc "Minimum value of a tuple."
   @spec min(tuple()) :: any()
-  def min(tup) when is_nonempty_tuple(tup), do: reduce(tup, &Kernel.min/2)
+  def min(tup) when is_tuple_nonempty(tup), do: reduce(tup, &Kernel.min/2)
 
   @doc "Maximum value of a tuple."
   @spec max(tuple()) :: any()
-  def max(tup) when is_nonempty_tuple(tup), do: reduce(tup, &Kernel.max/2)
+  def max(tup) when is_tuple_nonempty(tup), do: reduce(tup, &Kernel.max/2)
 
   @doc "Exists over a tuple."
   @spec any?(tuple(), E.predicate?(any)) :: bool()
@@ -94,7 +94,7 @@ defmodule Exa.Tuple do
 
   def map({p, q, r}, fun), do: {fun.(p), fun.(q), fun.(r)}
 
-  def map(tup, fun) when is_nonempty_tuple(tup) do
+  def map(tup, fun) when is_tuple_nonempty(tup) do
     0..(tuple_size(tup) - 1)
     |> Enum.map(&fun.(elem(tup, &1)))
     |> List.to_tuple()
@@ -129,14 +129,14 @@ defmodule Exa.Tuple do
 
   @doc "Fold over a tuple."
   @spec reduce(tuple(), acc, E.reducer(any(), acc)) :: acc when acc: var
-  def reduce(tup, init, fun) when is_nonempty_tuple(tup) and is_reducer(fun) do
+  def reduce(tup, init, fun) when is_tuple_nonempty(tup) and is_reducer(fun) do
     0..(tuple_size(tup) - 1)
     |> Enum.reduce(init, fn i, acc -> fun.(elem(tup, i), acc) end)
   end
 
   @doc "Fold over a tuple, using first element as the initial value."
   @spec reduce(tuple(), E.reducer(any(), acc)) :: acc when acc: var
-  def reduce(tup, fun) when is_nonempty_tuple(tup) and is_reducer(fun) do
+  def reduce(tup, fun) when is_tuple_nonempty(tup) and is_reducer(fun) do
     1..(tuple_size(tup) - 1)
     |> Enum.reduce(elem(tup, 0), fn i, acc -> fun.(elem(tup, i), acc) end)
   end
@@ -144,7 +144,7 @@ defmodule Exa.Tuple do
   @doc "Fold over two equal-length tuples."
   @spec bireduce(tuple(), tuple(), acc, E.bireducer(any(), acc)) :: acc when acc: var
   def bireduce(t1, t2, init, fun)
-      when is_nonempty_tuple(t1) and is_nonempty_tuple(t2) and
+      when is_tuple_nonempty(t1) and is_tuple_nonempty(t2) and
              tuple_size(t1) == tuple_size(t2) and is_bireducer(fun) do
     0..(tuple_size(t1) - 1)
     |> Enum.reduce(init, fn i, acc -> fun.(elem(t1, i), elem(t2, i), acc) end)

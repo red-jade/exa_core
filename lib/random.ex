@@ -12,7 +12,7 @@ defmodule Exa.Random do
   excluding a specific value to be avoided.
   """
   @spec rndint(pos_integer(), pos_integer()) :: pos_integer()
-  def rndint(n, avoid) when is_pos_int(n) and is_in_range(1, avoid, n) do
+  def rndint(n, avoid) when is_int_pos(n) and is_in_range(1, avoid, n) do
     case rndint(n) do
       ^avoid -> rndint(n, avoid)
       i -> i

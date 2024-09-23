@@ -63,13 +63,13 @@ defmodule Exa.Types do
 
   # integer ----------
 
-  defguard is_nonneg_int(i) when is_integer(i) and i >= 0
+  defguard is_int_nonneg(i) when is_integer(i) and i >= 0
 
-  defguard is_pos_int(i) when is_integer(i) and i > 0
+  defguard is_int_pos(i) when is_integer(i) and i > 0
 
-  defguard is_even(i) when is_integer(i) and (i &&& 0x01) == 0
+  defguard is_int_even(i) when is_integer(i) and (i &&& 0x01) == 0
 
-  defguard is_odd(i) when is_integer(i) and (i &&& 0x01) == 1
+  defguard is_int_odd(i) when is_integer(i) and (i &&& 0x01) == 1
 
   @typedoc "Percent value limited to the range [0,100]."
   @type percent() :: 0..100
@@ -157,7 +157,7 @@ defmodule Exa.Types do
   # non-negative floats (no tolerance)
   # also see Exa.Math.nonneg?
   @type nonneg_float() :: float()
-  defguard is_nonneg_float(f) when is_float(f) and f >= 0.0
+  defguard is_float_nonneg(f) when is_float(f) and f >= 0.0
 
   @typedoc "A floating point tolerance."
   @type epsilon() :: pos_float()
@@ -168,8 +168,8 @@ defmodule Exa.Types do
   defguard is_unit(f) when is_float(f) and 0.0 <= f and f <= 1.0
 
   @typedoc "A normalized float value in the range (-1.0,1.0) inclusive."
-  @type sym_unit() :: float()
-  defguard is_sym_unit(f) when is_float(f) and -1.0 <= f and f <= 1.0
+  @type unit_sym() :: float()
+  defguard is_unit_sym(f) when is_float(f) and -1.0 <= f and f <= 1.0
 
   # test for finite float range
   defguard is_rangef(p, q) when is_float(p) and is_float(q) and p < q
@@ -258,10 +258,10 @@ defmodule Exa.Types do
 
   defguard is_string(str) when is_binary(str)
 
-  defguard is_nonempty_string(nes) when is_string(nes) and nes != ""
+  defguard is_string_nonempty(nes) when is_string(nes) and nes != ""
 
   # only works for ASCII
-  defguard is_fix_string(s, n) when is_string(s) and byte_size(s) == n
+  defguard is_string_fix(s, n) when is_string(s) and byte_size(s) == n
 
   @typedoc """
   An identifier name, roughly equivalent to programming language names.
@@ -272,7 +272,7 @@ defmodule Exa.Types do
   An NCName may also contain `'-'` and `'.'`.
   """
   @type name() :: String.t()
-  defguard is_name(s) when is_nonempty_string(s)
+  defguard is_name(s) when is_string_nonempty(s)
 
   @doc "Test if a value is a name."
   @spec name?(any()) :: bool()
@@ -283,9 +283,9 @@ defmodule Exa.Types do
 
   # list ----------
 
-  defguard is_nonempty_list(nel) when is_list(nel) and nel != []
+  defguard is_list_nonempty(nel) when is_list(nel) and nel != []
 
-  defguard is_fix_list(fl, n) when is_nonneg_int(n) and is_list(fl) and length(fl) == n
+  defguard is_list_fix(fl, n) when is_int_nonneg(n) and is_list(fl) and length(fl) == n
 
   # keyword ----------
 
@@ -299,27 +299,34 @@ defmodule Exa.Types do
 
   # tuple ----------
 
-  defguard is_nonempty_tuple(tup) when is_tuple(tup) and tup != {}
+  defguard is_tuple_nonempty(tup) when is_tuple(tup) and tup != {}
 
-  defguard is_fix_tuple(tup, n) when is_nonneg_int(n) and is_tuple(tup) and tuple_size(tup) == n
+  defguard is_tuple_fix(tup, n) when is_int_nonneg(n) and is_tuple(tup) and tuple_size(tup) == n
 
-  defguard is_tag_tuple(tup, tag) when is_tuple(tup) and elem(tup, 0) == tag
+  defguard is_tuple_tag(tup, tag) when is_tuple(tup) and elem(tup, 0) == tag
 
-  defguard is_tag_tuple(tup, n, tag) when is_fix_tuple(tup, n) and elem(tup, 0) == tag
+  defguard is_tuple_tag(tup, n, tag) when is_tuple_fix(tup, n) and elem(tup, 0) == tag
 
   # map ----------
 
-  defguard is_empty_map(map) when is_map(map) and map_size(map) == 0
+  defguard is_map_empty(map) when is_map(map) and map_size(map) == 0
 
-  defguard is_nonempty_map(map) when is_map(map) and map_size(map) > 0
+  defguard is_map_nonempty(map) when is_map(map) and map_size(map) > 0
 
   # set ----------
 
   defguard is_set(s) when is_struct(s, MapSet)
 
-  defguard is_empty_set(s) when is_set(s) and s == @empty_set
+  # warning: break encapsulation of opaque MapSet type
+  #          cannot disable dialyzer warning for guards
 
-  defguard is_nonempty_set(nes) when is_set(nes) and nes != @empty_set
+  defguard set_size(s) when is_set(s) and map_size(s.map)
+
+  defguard is_set_empty(s) when is_set(s) and set_size(s) == 0
+
+  defguard is_set_nonempty(s) when is_set(s) and set_size(s) != 0
+
+  defguard is_set_member(s,x) when is_set(s) and is_map_key(s.map, x )
 
   # URI ----------
 
@@ -332,19 +339,19 @@ defmodule Exa.Types do
   The value should be the output of `Path.to_string`.
   """
   @type filename() :: String.t()
-  defguard is_filename(f) when is_nonempty_string(f)
+  defguard is_filename(f) when is_string_nonempty(f)
 
   @typedoc """
   Tag a string or atom as a filetype.
   The value should be lowercase alphanumeric ASCII.
   """
   @type filetype() :: atom() | String.t()
-  defguard is_filetype(ft) when is_nonempty_string(ft) or is_atom(ft)
+  defguard is_filetype(ft) when is_string_nonempty(ft) or is_atom(ft)
 
   # types of specific length ----------
 
   @type uint() :: non_neg_integer()
-  defguard is_uint(i) when is_nonneg_int(i)
+  defguard is_uint(i) when is_int_nonneg(i)
 
   @type uint4() :: 0..15
   defguard is_uint4(i) when is_integer(i) and @min_uint <= i and i <= @max_uint4
@@ -393,7 +400,7 @@ defmodule Exa.Types do
   end
 
   @doc "Test if a return value is an error tuple."
-  defguard is_err(err) when is_tag_tuple(err, 2, :error)
+  defguard is_err(err) when is_tuple_tag(err, 2, :error)
 
   @typedoc """
   Function return value.

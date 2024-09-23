@@ -47,7 +47,7 @@ defmodule Exa.Binary do
   Equivalent to `1 + floor(:math.log2(i))` for i > 0, and `nbits(0) = 0`.
   """
   @spec nbits(non_neg_integer()) :: non_neg_integer()
-  def nbits(i) when is_nonneg_int(i), do: ubitz(i, 0)
+  def nbits(i) when is_int_nonneg(i), do: ubitz(i, 0)
 
   @spec ubitz(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
   defp ubitz(0, n), do: n
@@ -59,7 +59,7 @@ defmodule Exa.Binary do
 
   @spec sbitz(integer()) :: non_neg_integer()
   defp sbitz(0), do: 0
-  defp sbitz(i) when is_pos_int(i), do: nbits(i) + 1
+  defp sbitz(i) when is_int_pos(i), do: nbits(i) + 1
   defp sbitz(i) when is_integer(i), do: nbits(-i - 1) + 1
 
   @doc """

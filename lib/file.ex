@@ -151,7 +151,7 @@ defmodule Exa.File do
     else
       dir = Path.dirname(path)
       [name | types] = path |> Path.basename() |> String.split(".")
-      {dir, name, types}
+      {dir, name, Enum.map(types, &String.downcase/1)}
     end
   end
 

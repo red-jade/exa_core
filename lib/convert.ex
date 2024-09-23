@@ -24,7 +24,7 @@ defmodule Exa.Convert do
 
   @doc "2-digit hex string to byte."
   @spec h2b(String.t()) :: byte()
-  def h2b(s) when is_fix_string(s, 2), do: s |> Integer.parse(16) |> elem(0)
+  def h2b(s) when is_string_fix(s, 2), do: s |> Integer.parse(16) |> elem(0)
 
   @doc "Hex string to integer, e.g. Unicode codepoint."
   @spec h2i(String.t()) :: pos_integer()
@@ -45,5 +45,5 @@ defmodule Exa.Convert do
 
   @doc "2-digit hex string to unit float."
   @spec h2f(String.t()) :: E.unit()
-  def h2f(s) when is_fix_string(s, 2), do: h2b(s) / 255.0
+  def h2f(s) when is_string_fix(s, 2), do: h2b(s) / 255.0
 end

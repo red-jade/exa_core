@@ -293,7 +293,7 @@ defmodule Exa.Math do
     c = ceil(x)
     f = floor(x)
     isint = c == f
-    fodd = f |> trunc() |> is_odd()
+    fodd = f |> trunc() |> is_int_odd()
 
     cond do
       # odd integer
@@ -343,7 +343,7 @@ defmodule Exa.Math do
     c = ceil(x)
     f = floor(x)
     isint = c == f
-    fodd = f |> trunc() |> is_odd()
+    fodd = f |> trunc() |> is_int_odd()
 
     cond do
       # odd integer
@@ -445,14 +445,14 @@ defmodule Exa.Math do
   Trig function sine for decimal degrees.
   Result is in the range `[-1.0,1.0]`.
   """
-  @spec sind(E.degrees()) :: E.sym_unit()
+  @spec sind(E.degrees()) :: E.unit_sym()
   def sind(deg), do: deg |> deg2rad() |> :math.sin()
 
   @doc """
   Trig function cosine for decimal degrees.
   Result is in the range `[-1.0,1.0]`.
   """
-  @spec cosd(E.degrees()) :: E.sym_unit()
+  @spec cosd(E.degrees()) :: E.unit_sym()
   def cosd(deg), do: deg |> deg2rad() |> :math.cos()
 
   @doc "Trig function tangent for decimal degrees."
@@ -463,15 +463,15 @@ defmodule Exa.Math do
   Trig function inverse sine giving decimal degrees.
   Result is in the range `[-90.0, 90.0]`.
   """
-  @spec asind(E.sym_unit()) :: E.degrees()
-  def asind(x) when is_sym_unit(x), do: x |> :math.asin() |> rad2deg()
+  @spec asind(E.unit_sym()) :: E.degrees()
+  def asind(x) when is_unit_sym(x), do: x |> :math.asin() |> rad2deg()
 
   @doc """
   Trig function inverse cosine giving decimal degrees.
   Result is in the range `[0.0,180.0]`.
   """
-  @spec acosd(E.sym_unit()) :: E.degrees()
-  def acosd(x) when is_sym_unit(x), do: x |> :math.acos() |> rad2deg()
+  @spec acosd(E.unit_sym()) :: E.degrees()
+  def acosd(x) when is_unit_sym(x), do: x |> :math.acos() |> rad2deg()
 
   @doc """
   Trig function 2-quadrant inverse tangent giving decimal degrees.

@@ -295,9 +295,9 @@ defmodule Exa.List do
   ## Examples: 
       iex> replace([], &is_float/1, nil)
       {:no_match, []}
-      iex> replace([1,2,3], &is_even/1, nil)
+      iex> replace([1,2,3], &is_int_even/1, nil)
       {:ok, [1, nil, 3]}
-      iex> replace([1,3,5], &is_even/1, 7)
+      iex> replace([1,3,5], &is_int_even/1, 7)
       {:no_match, [1, 3, 5]}
   """
   @spec replace(list(), fun(), any()) :: {:ok | :no_match, list()}
@@ -397,7 +397,7 @@ defmodule Exa.List do
 
   def insert_at(ls, 0, x), do: [x | ls]
 
-  def insert_at(ls, i, x) when is_pos_int(i) do
+  def insert_at(ls, i, x) when is_int_pos(i) do
     case Enum.split(ls, i) do
       {pre, []} -> pre ++ [x]
       {pre, post} -> pre ++ [x | post]
@@ -426,7 +426,7 @@ defmodule Exa.List do
 
   def inserts_at(ls, 0, xs), do: xs ++ ls
 
-  def inserts_at(ls, i, xs) when is_pos_int(i) do
+  def inserts_at(ls, i, xs) when is_int_pos(i) do
     case Enum.split(ls, i) do
       {pre, []} -> pre ++ xs
       {pre, post} -> pre ++ xs ++ post

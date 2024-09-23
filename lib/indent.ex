@@ -337,7 +337,7 @@ defmodule Exa.Indent do
   """
   @spec str(indent(), any(), E.count1(), align()) :: indent()
   def str(%Indent{} = io, a, width, align \\ :left)
-      when is_pos_int(width) and is_align(align) do
+      when is_int_pos(width) and is_align(align) do
     str = to_string(a)
     len = String.length(str)
 
@@ -384,7 +384,7 @@ defmodule Exa.Indent do
   """
   @spec txt(indent(), char() | T.textdata(), E.count1(), align()) :: indent()
   def txt(%Indent{} = io, txt, width, align \\ :left)
-      when is_pos_int(width) and is_align(align) do
+      when is_int_pos(width) and is_align(align) do
     len = text_length(txt)
 
     fix =
@@ -535,7 +535,7 @@ defmodule Exa.Indent do
 
   @typedoc "A row spec is a constant width, or a list of column widths."
   @type rspec() :: E.count1() | [E.count1(), ...]
-  defguard is_rspec(rspec) when is_pos_int(rspec) or is_nonempty_list(rspec)
+  defguard is_rspec(rspec) when is_int_pos(rspec) or is_list_nonempty(rspec)
 
   @doc """
   Append a table with column headings and row data.
@@ -544,7 +544,7 @@ defmodule Exa.Indent do
   @spec table(indent(), [...], [[...]], rspec(), E.maybe(table_delims())) :: indent()
   def table(io, cols, data, rspec, delims \\ nil)
       when is_indent(io) and
-             is_nonempty_list(cols) and is_nonempty_list(data) and
+             is_list_nonempty(cols) and is_list_nonempty(data) and
              is_rspec(rspec) and (is_nil(delims) or is_tuple(delims)) do
     ncol = length(cols)
     delims = if is_nil(delims), do: io.table, else: delims
@@ -614,7 +614,7 @@ defmodule Exa.Indent do
   defp sep(io, tspec, hchar, dels, nl? \\ true)
 
   defp sep(io, {n, w}, hchar, dels, nl?)
-       when is_pos_int(n) and is_pos_int(w) and is_tuple(dels) do
+       when is_int_pos(n) and is_int_pos(w) and is_tuple(dels) do
     hchars = repeat(hchar, w)
     col1 = <<l(dels)::utf8, hchars::binary>>
     mid = <<m(dels)::utf8, hchars::binary>>
@@ -649,7 +649,7 @@ defmodule Exa.Indent do
   """
   @spec row(indent(), [...], rspec(), char()) :: indent()
   def row(io, dat, rspec, vchar)
-      when is_indent(io) and is_nonempty_list(dat) and is_rspec(rspec) and is_char(vchar) do
+      when is_indent(io) and is_list_nonempty(dat) and is_rspec(rspec) and is_char(vchar) do
     ws =
       if is_integer(rspec) do
         List.duplicate(rspec, length(dat))
@@ -674,6 +674,6 @@ defmodule Exa.Indent do
   # Convert duplicates to string to save memory 
   # and speed up traversals, such as text_length.
   @spec spacer(spacer()) :: T.text()
-  defp spacer(n) when is_nonneg_int(n), do: repeat(?\s, n)
+  defp spacer(n) when is_int_nonneg(n), do: repeat(?\s, n)
   defp spacer(str) when is_string(str), do: str
 end

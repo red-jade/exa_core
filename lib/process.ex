@@ -17,7 +17,7 @@ defmodule Exa.Process do
 
   @typedoc "Segment of a namespace."
   @type nsseg() :: String.t() | atom()
-  defguard is_nsseg(s) when is_nonempty_string(s) or is_atom(s)
+  defguard is_nsseg(s) when is_string_nonempty(s) or is_atom(s)
 
   @typedoc "A namespace is a sequence of segments."
   @type ns() :: [nsseg(), ...]

@@ -146,7 +146,7 @@ defmodule Exa.String do
   @spec int_hex(non_neg_integer()) :: String.t()
   def int_hex(i) do
     str = Integer.to_string(i, 16)
-    if str |> String.length() |> is_even(), do: str, else: "0" <> str
+    if str |> String.length() |> is_int_even(), do: str, else: "0" <> str
   end
 
   @doc """
@@ -431,11 +431,11 @@ defmodule Exa.String do
       "IX"
   """
   @spec ordinal(E.index1(), ?1 | ?a | ?A | ?i | ?I) :: String.t()
-  def ordinal(i, ?1) when is_pos_int(i), do: Integer.to_string(i)
-  def ordinal(i, ?a) when is_pos_int(i) and i <= 26, do: chr(?a + i - 1)
-  def ordinal(i, ?A) when is_pos_int(i) and i <= 26, do: chr(?A + i - 1)
-  def ordinal(i, ?i) when is_pos_int(i), do: String.downcase(roman("", i))
-  def ordinal(i, ?I) when is_pos_int(i), do: roman("", i)
+  def ordinal(i, ?1) when is_int_pos(i), do: Integer.to_string(i)
+  def ordinal(i, ?a) when is_int_pos(i) and i <= 26, do: chr(?a + i - 1)
+  def ordinal(i, ?A) when is_int_pos(i) and i <= 26, do: chr(?A + i - 1)
+  def ordinal(i, ?i) when is_int_pos(i), do: String.downcase(roman("", i))
+  def ordinal(i, ?I) when is_int_pos(i), do: roman("", i)
 
   defp roman(s, 0), do: s
   defp roman(s, 1), do: s <> "I"
@@ -503,7 +503,7 @@ defmodule Exa.String do
   @doc "Repeat a character to make a string."
   @spec repeat(char(), E.count()) :: String.t()
   def repeat(c, 0) when is_char(c), do: ""
-  def repeat(c, n) when is_char(c) and is_pos_int(n), do: :binary.copy(<<c::utf8>>, n)
+  def repeat(c, n) when is_char(c) and is_int_pos(n), do: :binary.copy(<<c::utf8>>, n)
 
   @doc """
   Truncate a string to be a fixed width.
@@ -527,7 +527,7 @@ defmodule Exa.String do
   """
   @spec valid_identifier?(String.t() | charlist()) :: bool()
 
-  def valid_identifier?(str) when is_nonempty_string(str) do
+  def valid_identifier?(str) when is_string_nonempty(str) do
     str |> to_charlist() |> valid_identifier?()
   end
 
@@ -545,11 +545,11 @@ defmodule Exa.String do
   """
   @spec valid_name?(String.t() | charlist()) :: bool()
 
-  def valid_name?(str) when is_nonempty_string(str) do
+  def valid_name?(str) when is_string_nonempty(str) do
     str |> to_charlist() |> valid_name?()
   end
 
-  def valid_name?(chars) when is_nonempty_list(chars) do
+  def valid_name?(chars) when is_list_nonempty(chars) do
     chars != [] and Enum.all?(chars, &is_namechar/1)
   end
 

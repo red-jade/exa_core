@@ -28,7 +28,7 @@ defmodule Exa.Factory do
   Raises an error if two of the structs contain the same set of keys.
   """
   @spec factory([module()]) :: factory_fun()
-  def factory(mods) when is_nonempty_list(mods) and is_module(hd(mods)) do
+  def factory(mods) when is_list_nonempty(mods) and is_module(hd(mods)) do
     index =
       Enum.reduce(mods, %{}, fn m, index ->
         # use MapSet or sorted atom list?
