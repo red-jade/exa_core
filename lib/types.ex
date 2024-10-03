@@ -326,7 +326,7 @@ defmodule Exa.Types do
 
   defguard is_set_nonempty(s) when is_set(s) and set_size(s) != 0
 
-  defguard is_set_member(s,x) when is_set(s) and is_map_key(s.map, x )
+  defguard is_set_member(s, x) when is_set(s) and is_map_key(s.map, x)
 
   # URI ----------
 
