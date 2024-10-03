@@ -4,7 +4,7 @@ defmodule Exa.Process do
 
   A namespace is a sequence of names (strings, atoms).
   """
-
+  use Exa.Constants
   import Exa.Types
   alias Exa.Types, as: E
 
@@ -110,6 +110,66 @@ defmodule Exa.Process do
   @doc "Get the key for a namespace."
   @spec key(ns()) :: nskey()
   def key(ns) when is_ns(ns), do: ns |> Enum.join("_") |> String.to_atom()
+
+  # --------------------------------
+  # useful single process interrupts
+  # --------------------------------
+
+  @doc "Map with a finite timeout (ms)."
+  @spec map([a], E.mapper(a, b), E.timeout1()) ::
+          [b] | {:timeout, [b]}
+        when a: var, b: var
+  def map(ls, mapr, dt \\ @timeout) when is_mapper(mapr) and is_timeout1(dt) do
+    {:ok, tref} = dt |> min(@timeout) |> :timer.send_after(:interrupt)
+    do_map_timer(ls, mapr, tref, [])
+  end
+
+  @spec do_map_timer([a], E.mapper(a, b), :timer.tref(), [b]) ::
+          [b] | {:timeout, [b]}
+        when a: var, b: var
+  defp do_map_timer(ls, mapr, tref, out) do
+    # TODO - adaptive batch to get more executions per receive block
+    receive do
+      :interrupt -> {:timeout, Enum.reverse(out)}
+    after
+      0 ->
+        case Enum.split(ls, 1) do
+          {[], []} ->
+            :timer.cancel(tref)
+            Exa.Message.purge(:interrupt)
+            Enum.reverse(out)
+
+          {[h], t} ->
+            do_map_timer(t, mapr, tref, [mapr.(h) | out])
+        end
+    end
+  end
+
+  @doc "Reduce with a finite timeout (ms)."
+  @spec reduce([a], acc, E.reducer(a, acc), E.timeout1()) ::          acc | {:timeout, acc} when a: var, acc: var
+  def reduce(ls, init, redr, dt \\ @timeout) when is_reducer(redr) and is_timeout1(dt) do
+    {:ok, tref} = dt |> min(@timeout) |> :timer.send_after(:interrupt)
+    do_reduce_timer(ls, init, redr, tref)
+  end
+
+  @spec do_reduce_timer([a], acc, E.reducer(a, acc), :timer.tref()) ::          acc | {:timeout, acc}        when a: var, acc: var
+  defp do_reduce_timer(ls, acc, redr, tref) do
+    # TODO - adaptive batch to get more executions per receive block
+    receive do
+      :interrupt -> {:timeout, acc}
+    after
+      0 ->
+        case Enum.split(ls, 1) do
+          {[], []} ->
+            :timer.cancel(tref)
+            Exa.Message.purge(:interrupt)
+            acc
+
+          {[h], t} ->
+            do_reduce_timer(t, redr.(h,acc), redr, tref)
+        end
+    end
+  end
 
   # -----------------
   # private functions
