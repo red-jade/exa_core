@@ -3,6 +3,7 @@ defmodule Exa.Math do
   Math functions, trig functions, 
   and approximate floating-point arithmetic.
   """
+  import Bitwise
 
   use Exa.Constants
 
@@ -402,6 +403,10 @@ defmodule Exa.Math do
     end
   end
 
+  # --------------------
+  # linear interpolation
+  # --------------------
+
   @doc """
   Linear interpolation. 
 
@@ -409,17 +414,19 @@ defmodule Exa.Math do
   Does not clamp parameter in the range `0.0-1.0`.
 
   ## Examples
-      iex> lerp(1.0,0.0,2.0)
+      iex> lerp(1.0, 0.0, 2.0)
       1.0
-      iex> lerp(1.0,1.0,2.0)
+      iex> lerp(1.0, 1.0, 2.0)
       2.0
-      iex> lerp(1.0,0.5,2.0)
+      iex> lerp(1.0, 0.5, 2.0)
       1.5
-      iex> lerp(1.0,-1.0,2.0)
+      iex> lerp(1.0, -1.0, 2.0)
       0.0
   """
   @spec lerp(float(), E.param(), float()) :: float()
-  def lerp(x, t, y) when is_float(x) and is_param(t) and is_float(y), do: x + t * (y - x)
+  def lerp(x, t, y) when is_float(x) and is_param(t) and is_float(y) do
+    x + t * (y - x)
+  end
 
   @doc """
   Return a linear interpolation function with arity 1.
@@ -427,7 +434,161 @@ defmodule Exa.Math do
   An optimization that precalculates the difference of the endpoints.
   """
   @spec lerp_fun(float(), float()) :: (float() -> float())
-  def lerp_fun(x, y) when is_float(x) and is_float(y), do: fn t -> x + t * (y - x) end
+  def lerp_fun(x, y) when is_float(x) and is_float(y) do
+    fn t -> x + t * (y - x) end
+  end
+
+  # ---------------------
+  # powers and factorials
+  # ---------------------
+
+  @doc """
+  Raise an integer to an integer power.
+
+  ## Examples
+      iex> ipow(2, 5)
+      32
+      iex> ipow(3, 3)
+      27
+      iex> ipow(2, 0)
+      1
+      iex> ipow(0, 2)
+      0
+      iex> ipow(0, 0)
+      1
+  """
+  @spec ipow(integer(), non_neg_integer()) :: non_neg_integer()
+  def ipow(0, 0), do: 1
+  def ipow(0, m) when is_int_pos(m), do: 0
+  def ipow(1, m) when is_int_pos(m), do: 1
+  def ipow(2, m) when is_int_pos(m), do: 1 <<< m
+  def ipow(4, m) when is_int_pos(m), do: 1 <<< (2 * m)
+  def ipow(8, m) when is_int_pos(m), do: 1 <<< (3 * m)
+  def ipow(n, 0) when is_integer(n), do: 1
+  def ipow(n, 1) when is_integer(n), do: n
+  def ipow(n, 2) when is_integer(n), do: n * n
+  def ipow(n, 3) when is_integer(n), do: n * n * n
+  def ipow(n, m) when is_integer(n) and is_int_pos(m), do: trunc(:math.pow(n, m))
+
+  @doc """
+  Factorial function `n!`.
+  The definition is a recurrence relation:
+  - `0!` is defined to be `1`
+  - `n! = n * (n-1)!`
+
+  ## Examples
+      iex> fac(11)
+      39916800
+      iex> fac(0)
+      1
+  """
+  @spec fac(non_neg_integer()) :: non_neg_integer()
+  def fac(n) when is_int_nonneg(n), do: do_fac(n, 0, 1)
+
+  # truncated factorial 
+  # n * (n-1) * (n-2) ... (n-k+1)
+  defp do_fac(k, k, f), do: f
+  defp do_fac(n, k, f), do: do_fac(n - 1, k, n * f)
+
+  @doc """
+  Number of permutations of k elements taken from a collection of size n.
+  For a permutation, the ordering of the k elements is significant (list semantics).
+
+  The formula is: `nPk = n! / (n-k)!`
+
+  ## Examples
+      iex> n_permutations(5,3)
+      60
+  """
+  @spec n_permutations(non_neg_integer(), non_neg_integer()) :: pos_integer()
+  def n_permutations(n, k) when is_int_nonneg(n) and is_int_nonneg(k) and k <= n do
+    div(fac(n), fac(n - k))
+  end
+
+  @doc """
+  Get all permutations of a list.
+
+  For a list of length `n`, the number of permutations will be `n!`.
+
+  If the list is empty, there will be one permutation, 
+  which is just the empty list.
+
+  ## Examples
+
+      iex> permutations([1,2,3])
+      [[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]]
+
+      iex> permutations([])
+      [[]]
+  """
+  @spec permutations(list()) :: [list()]
+  def permutations([]), do: [[]]
+  def permutations(ls), do: for(h <- ls, t <- permutations(ls -- [h]), do: [h | t])
+
+  @doc """
+  Get the number of selections for a List of Lists (LoL).
+  A selection takes one value from each list in the sequence.
+
+  The result will be the product of all lengths in the original LoL.
+  If there is any empty list in the sequence, 
+  the result will be zero.
+
+  ## Examples
+
+      iex> n_selections([[1,2], [3,4]])
+      4
+
+      iex> n_selections([[1,2], []])
+      0
+  """
+  @spec n_selections([list()]) :: non_neg_integer()
+
+  def n_selections([]), do: 0
+
+  def n_selections(lol) do
+    Enum.reduce_while(lol, 1, fn
+      [], _ -> {:halt, 0}
+      ls, n -> {:cont, n * length(ls)}
+    end)
+  end
+
+  @doc """
+  Get all ordered selections taken from a List of Lists (LoL).
+  A selection takes one value from each list in the sequence.
+
+  The length of each result will be the length of the original LoL.
+
+  The number of results will be the product of all lengths in the original LoL.
+
+  If there is an empty list in the LoL input,
+  the result will be the empty list.
+
+  ## Examples
+
+      iex> selections([[1,2], [3,4]])
+      [[1,3], [1,4], [2,3], [2,4]]
+
+      iex> selections([[1,2], []])
+      []
+  """
+  @spec selections([list()]) :: [list()]
+  def selections([]), do: [[]]
+  def selections([hs | ts]), do: for(h <- hs, t <- selections(ts), do: [h | t])
+
+  @doc """
+  Number of combinations of k elements taken from a collection of size n.
+  For a combination, the ordering of the k elements does not matter (set semantics).
+
+  The formula is: `nCk = n! / k! (n-k)!`
+
+  ## Examples
+      iex> n_combinations(5,3)
+      10
+  """
+  @spec n_combinations(non_neg_integer(), non_neg_integer()) :: pos_integer()
+  def n_combinations(n, k) when is_int_nonneg(n) and is_int_nonneg(k) and k <= n do
+    div(do_fac(n, n - k, 1), fac(k))
+  end
 
   # ------------
   # trigonometry
