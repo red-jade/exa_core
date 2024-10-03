@@ -82,6 +82,7 @@ defmodule Exa.Message do
 
   @doc """
   Drain the message queue. 
+
   Optionally supply a label and print all the messages.
   """
   @spec drain(E.maybe(String.t())) :: :ok
@@ -90,6 +91,16 @@ defmodule Exa.Message do
       msg ->
         if not is_nil(label), do: IO.inspect(msg, label: label)
         drain(label)
+    after
+      0 -> :ok
+    end
+  end
+
+  @doc "Purge the message queue of all copies of a constant message."
+  @spec purge(any()) :: :ok
+  def purge(msg \\ nil) do
+    receive do
+      ^msg -> purge(msg)
     after
       0 -> :ok
     end
