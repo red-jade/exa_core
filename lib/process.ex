@@ -146,13 +146,15 @@ defmodule Exa.Process do
   end
 
   @doc "Reduce with a finite timeout (ms)."
-  @spec reduce([a], acc, E.reducer(a, acc), E.timeout1()) ::          acc | {:timeout, acc} when a: var, acc: var
+  @spec reduce([a], acc, E.reducer(a, acc), E.timeout1()) :: acc | {:timeout, acc}
+        when a: var, acc: var
   def reduce(ls, init, redr, dt \\ @timeout) when is_reducer(redr) and is_timeout1(dt) do
     {:ok, tref} = dt |> min(@timeout) |> :timer.send_after(:interrupt)
     do_reduce_timer(ls, init, redr, tref)
   end
 
-  @spec do_reduce_timer([a], acc, E.reducer(a, acc), :timer.tref()) ::          acc | {:timeout, acc}        when a: var, acc: var
+  @spec do_reduce_timer([a], acc, E.reducer(a, acc), :timer.tref()) :: acc | {:timeout, acc}
+        when a: var, acc: var
   defp do_reduce_timer(ls, acc, redr, tref) do
     # TODO - adaptive batch to get more executions per receive block
     receive do
@@ -166,7 +168,7 @@ defmodule Exa.Process do
             acc
 
           {[h], t} ->
-            do_reduce_timer(t, redr.(h,acc), redr, tref)
+            do_reduce_timer(t, redr.(h, acc), redr, tref)
         end
     end
   end
