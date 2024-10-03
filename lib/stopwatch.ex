@@ -61,7 +61,7 @@ defmodule Exa.Stopwatch do
 
   @doc """
   Get the elapsed time since a previous call to `now()`.
-  The value may ybe zero.
+  The value maybe zero.
   """
   @spec elapsed(E.time_micros()) :: E.duration_micros()
   def elapsed(start), do: now() - start
