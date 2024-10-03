@@ -76,9 +76,9 @@ defmodule Exa.Map do
 
       iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 3 )
       2
-      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 1, 4 => 4}, 2 )
+      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 2 )
       1
-      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 1, 4 => 4}, 99 )
+      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 99 )
       nil
   """
   @spec key(%{a => b}, b, a | nil) :: E.maybe(a) when a: var, b: var
@@ -88,6 +88,29 @@ defmodule Exa.Map do
         ^v -> {:halt, k}
         _ -> {:cont, default}
       end
+    end)
+  end
+
+  @doc """
+  Inverse look-up: get all keys for a value.
+
+  If the value does not exist, 
+  then return the empty list.
+
+  ## Examples
+
+      iex> Exa.Map.keys( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 3 )
+      [2]
+      iex> Exa.Map.keys( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 2 ) |> Enum.sort()
+      [1, 3]
+      iex> Exa.Map.keys( %{1 => 2, 2 => 3, 3 => 1, 4 => 4}, 99 )
+      []
+  """
+  @spec keys(%{a => b}, b) :: [a] when a: var, b: var
+  def keys(map, v) do
+    Enum.reduce(map, [], fn
+      {k, ^v}, keys -> [k | keys]
+      _, keys -> keys
     end)
   end
 
