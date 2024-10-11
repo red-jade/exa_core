@@ -115,12 +115,22 @@ defmodule Exa.Process do
   # useful single process interrupts
   # --------------------------------
 
-  @doc "Map with a finite timeout (ms)."
+  @doc """
+  Map with a finite timeout (ms).
+
+  No new processes is spawned. 
+  The call is blocking. All computation happens in this _self_ process.
+  (so not the same as `Task.asynch` + `Task.await`).
+
+  The implementation configures an interrupt for itself (`:timer.send_after/2`),
+  then interleaves computation steps
+  with a zero-wait test to receive the interrupt (`receive after 0`).
+  """
   @spec map([a], E.mapper(a, b), E.timeout1()) ::
           [b] | {:timeout, [b]}
         when a: var, b: var
-  def map(ls, mapr, dt \\ @timeout) when is_mapper(mapr) and is_timeout1(dt) do
-    {:ok, tref} = dt |> min(@timeout) |> :timer.send_after(:interrupt)
+  def map(ls, mapr, dt \\ @max_duration) when is_mapper(mapr) and is_timeout1(dt) do
+    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(:interrupt)
     do_map_timer(ls, mapr, tref, [])
   end
 
@@ -145,11 +155,21 @@ defmodule Exa.Process do
     end
   end
 
-  @doc "Reduce with a finite timeout (ms)."
+  @doc """
+  Reduce with a finite timeout (ms).
+
+  No new processes is spawned. 
+  The call is blocking. All computation happens in this _self_ process.
+  (so not the same as `Task.asynch` + `Task.await`).
+
+  The implementation configures an interrupt for itself (`:timer.send_after/2`),
+  then interleaves computation steps
+  with a zero-wait test to receive the interrupt (`receive after 0`).
+  """
   @spec reduce([a], acc, E.reducer(a, acc), E.timeout1()) :: acc | {:timeout, acc}
         when a: var, acc: var
-  def reduce(ls, init, redr, dt \\ @timeout) when is_reducer(redr) and is_timeout1(dt) do
-    {:ok, tref} = dt |> min(@timeout) |> :timer.send_after(:interrupt)
+  def reduce(ls, init, redr, dt \\ @max_duration) when is_reducer(redr) and is_timeout1(dt) do
+    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(:interrupt)
     do_reduce_timer(ls, init, redr, tref)
   end
 
@@ -169,6 +189,56 @@ defmodule Exa.Process do
 
           {[h], t} ->
             do_reduce_timer(t, redr.(h, acc), redr, tref)
+        end
+    end
+  end
+
+  @doc """
+  Reduce while with a finite timeout (ms).
+
+  No new processes is spawned. 
+  The call is blocking. All computation happens in this _self_ process.
+  (so not the same as `Task.asynch` + `Task.await`).
+
+  The implementation configures an interrupt for itself (`:timer.send_after/2`),
+  then interleaves computation steps
+  with a zero-wait test to receive the interrupt (`receive after 0`).
+
+  The continue/halt semantics are the same as `Enum.reduce_while/3`.
+  """
+  @spec reduce_while([a], acc, E.while_reducer(a, acc), E.timeout1()) :: acc | {:timeout, acc}
+        when a: var, acc: var
+  def reduce_while(ls, init, redr, dt \\ @max_duration)
+      when is_whiler(redr) and is_timeout1(dt) do
+    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(:interrupt)
+    do_wreduce_timer(ls, init, redr, tref)
+  end
+
+  @spec do_wreduce_timer([a], acc, E.while_reducer(a, acc), :timer.tref()) ::
+          acc | {:timeout, acc}
+        when a: var, acc: var
+  defp do_wreduce_timer(ls, acc, redr, tref) do
+    # TODO - adaptive batch to get more executions per receive block
+    receive do
+      :interrupt -> {:timeout, acc}
+    after
+      0 ->
+        case Enum.split(ls, 1) do
+          {[], []} ->
+            :timer.cancel(tref)
+            Exa.Message.purge(:interrupt)
+            acc
+
+          {[h], t} ->
+            case redr.(h, acc) do
+              {:halt, new_acc} ->
+                :timer.cancel(tref)
+                Exa.Message.purge(:interrupt)
+                new_acc
+
+              {:cont, new_acc} ->
+                do_wreduce_timer(t, new_acc, redr, tref)
+            end
         end
     end
   end
