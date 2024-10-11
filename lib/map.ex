@@ -9,10 +9,27 @@ defmodule Exa.Map do
   alias Exa.Types, as: E
 
   @doc """
+  Zip two lists of the same size to build a map.
+
+  Equivalent to `xs |> Enum.zip(ys) |> Map.new()`
+  but in a single pass.
+
+  ## Examples:
+      iex> zip_new([1, 2], [:foo, :bar])
+      %{1 => :foo, 2 => :bar}
+  """
+  @spec zip_new([a], [b]) :: %{a => b} when a: var, b: var
+  def zip_new(xs, ys) when is_list(xs) and is_list(ys), do: do_zip(xs, ys, %{})
+
+  @spec do_zip([a], [b], %{a => b}) :: %{a => b} when a: var, b: var
+  defp do_zip([x | xs], [y | ys], m), do: do_zip(xs, ys, Map.put(m, x, y))
+  defp do_zip([], [], m), do: m
+
+  @doc """
   Map a function over the values of a map.
 
   ## Examples:
-      iex> Exa.Map.map( %{1 => [1,2,3], 2 => [], 3 => [2,1]}, &length/1)
+      iex> map( %{1 => [1,2,3], 2 => [], 3 => [2,1]}, &length/1)
       %{1 => 3, 2 => 0, 3 => 2}
   """
   @spec map(%{a => b}, E.mapper(b, c)) :: %{a => c} when a: var, b: var, c: var
@@ -26,9 +43,9 @@ defmodule Exa.Map do
   Accumulate a unsorted list of keys that map to the same value.
 
   ## Examples:
-      iex> Exa.Map.invert(%{})
+      iex> invert(%{})
       %{}
-      iex> Exa.Map.invert( %{1 => 2, 2 => 3, 3 => 1, 4 => 2} )
+      iex> invert( %{1 => 2, 2 => 3, 3 => 1, 4 => 2} )
       %{1 => [3], 2 => [4,1], 3 => [2]}
   """
   @spec invert(%{a => b}) :: %{b => [a, ...]} when a: var, b: var
@@ -46,7 +63,7 @@ defmodule Exa.Map do
 
   ## Examples
 
-     iex> Exa.Map.invert!( %{1 => 2, 2 => 3, 3 => 1, 4 => 4} )
+     iex> invert!( %{1 => 2, 2 => 3, 3 => 1, 4 => 4} )
      %{1 => 3, 2 => 1, 3 => 2, 4 => 4}
   """
   @spec invert!(%{a => b}) :: %{b => a} when a: var, b: var
@@ -74,11 +91,11 @@ defmodule Exa.Map do
 
   ## Examples
 
-      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 3 )
+      iex> key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 3 )
       2
-      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 2 )
+      iex> key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 2 )
       1
-      iex> Exa.Map.key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 99 )
+      iex> key( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 99 )
       nil
   """
   @spec key(%{a => b}, b, a | nil) :: E.maybe(a) when a: var, b: var
@@ -99,11 +116,11 @@ defmodule Exa.Map do
 
   ## Examples
 
-      iex> Exa.Map.keys( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 3 )
+      iex> keys( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 3 )
       [2]
-      iex> Exa.Map.keys( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 2 ) |> Enum.sort()
+      iex> keys( %{1 => 2, 2 => 3, 3 => 2, 4 => 4}, 2 ) |> Enum.sort()
       [1, 3]
-      iex> Exa.Map.keys( %{1 => 2, 2 => 3, 3 => 1, 4 => 4}, 99 )
+      iex> keys( %{1 => 2, 2 => 3, 3 => 1, 4 => 4}, 99 )
       []
   """
   @spec keys(%{a => b}, b) :: [a] when a: var, b: var
@@ -126,10 +143,10 @@ defmodule Exa.Map do
 
   ## Examples
 
-      iex> Exa.Map.pick( %{1 => 2, 2 => 3, 3 => 2} )
+      iex> pick( %{1 => 2, 2 => 3, 3 => 2} )
       {{1, 2}, %{2 => 3, 3 => 2}}
 
-      iex> Exa.Map.pick( %{} )
+      iex> pick( %{} )
       {:error, "Empty map"}
   """
   @spec pick(map()) :: {{any(), any()}, map()} | {:error, any()}
