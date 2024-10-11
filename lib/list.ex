@@ -510,6 +510,38 @@ defmodule Exa.List do
     end
   end
 
+  @doc """
+  Filter and map.
+
+  Similar to a scalar flat_map, 
+  but without the crazy enlisting, empty lists and flatten pass.
+
+  Apply a mapper function, but only keep the truthy values
+  (i.e. those values not `nil` and not `false`).
+
+  ## Examples
+      iex> filter_map([1,2,3,4], fn 
+      ...>   x when rem(x,2) == 0 -> x*x
+      ...>   _ -> nil
+      ...> end)
+      [4,16]
+  """
+  @spec filter_map([a], E.mapper(a, b | nil | false)) :: [b] when a: var, b: var
+  def filter_map(xs, mapr) when is_list(xs) and is_mapper(mapr) do
+    do_fmap(xs, mapr, [])
+  end
+
+  @spec do_fmap([a], E.mapper(a, b | nil | false), [b]) :: [b] when a: var, b: var
+  defp do_fmap([x | xs], mapr, ys) do
+    case mapr.(x) do
+      false -> do_fmap(xs, mapr, ys)
+      nil -> do_fmap(xs, mapr, ys)
+      y -> do_fmap(xs, mapr, [y | ys])
+    end
+  end
+
+  defp do_fmap([], _mapr, ys), do: Enum.reverse(ys)
+
   # --------------------
   # chunked map & reduce
   # --------------------
