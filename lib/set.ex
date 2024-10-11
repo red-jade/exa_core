@@ -16,9 +16,9 @@ defmodule Exa.Set do
 
   ## Examples
 
-      iex> Exa.Set.min( MapSet.new([1,2,3,4]) )
+      iex> min( MapSet.new([1,2,3,4]) )
       1
-      iex> Exa.Set.min( MapSet.new() )
+      iex> min( MapSet.new() )
       {:error, "Empty set"}
   """
   @spec min(MapSet.t()) :: any() | {:error, any()}
@@ -33,10 +33,10 @@ defmodule Exa.Set do
 
   ## Examples
 
-      iex> Exa.Set.max( MapSet.new([1,2,3,4]) )
+      iex> max( MapSet.new([1,2,3,4]) )
       4
 
-      iex> Exa.Set.max( MapSet.new() )
+      iex> max( MapSet.new() )
       {:error, "Empty set"}
   """
   @spec max(MapSet.t()) :: any() | {:error, any()}
@@ -51,11 +51,11 @@ defmodule Exa.Set do
 
   ## Examples
 
-      iex> Exa.Set.sum( MapSet.new([1,2,3,4]) )
+      iex> sum( MapSet.new([1,2,3,4]) )
       10
-      iex> Exa.Set.sum( MapSet.new() )
+      iex> sum( MapSet.new() )
       {:error, "Empty set"}
-      iex> Exa.Set.sum( MapSet.new([:foo]) )
+      iex> sum( MapSet.new([:foo]) )
       {:error, %ArithmeticError{
          message: "bad argument in arithmetic expression"
       }}
@@ -78,11 +78,11 @@ defmodule Exa.Set do
 
   ## Examples
 
-      iex> Exa.Set.product( MapSet.new([1,2,3,4]) )
+      iex> product( MapSet.new([1,2,3,4]) )
       24
-      iex> Exa.Set.product( MapSet.new() )
+      iex> product( MapSet.new() )
       {:error, "Empty set"}
-      iex> Exa.Set.product( MapSet.new([:foo]) )
+      iex> product( MapSet.new([:foo]) )
       {:error, %ArithmeticError{
          message: "bad argument in arithmetic expression"
       }}
@@ -110,10 +110,10 @@ defmodule Exa.Set do
 
   ## Examples
 
-      iex> Exa.Set.pick( MapSet.new([1,2,3,4]) )
+      iex> pick( MapSet.new([1,2,3,4]) )
       {1, MapSet.new([2,3,4])}
 
-      iex> Exa.Set.pick( MapSet.new() )
+      iex> pick( MapSet.new() )
       {:error, "Empty set"}
   """
   @spec pick(MapSet.t()) :: {any(), MapSet.t()} | {:error, any()}
@@ -127,15 +127,31 @@ defmodule Exa.Set do
   end
 
   @doc """
-  Map a function over a set and return a set.
+  Apply a mapping over a set and return a set.
+
+  The mapping must have values for every member of the set.
+
+  Equivalent to `ms |> MapSet.to_list() |> MapSet.new()`
+  but in one pass, without the intermediate list.
 
   ## Examples
 
-      iex> Exa.Set.map( MapSet.new(["foo", "bar", "baz"]), &String.first/1 )
+      iex> map( MapSet.new(["foo", "bar", "baz"]), &String.first/1 )
       MapSet.new(["f","b"])
+
+      iex> map( MapSet.new([1, 2, 3]), %{1 => 7, 2 => 8, 3 => 9} )
   """
-  @spec map(MapSet.t(), E.mapper(any(), any())) :: MapSet.t()
-  def map(ms, mapr) do
-    Enum.reduce(ms, MapSet.new(), fn x, out -> MapSet.put(out, mapr.(x)) end)
+  @spec map(MapSet.t(), E.mapping(any(), any())) :: MapSet.t()
+
+  def map(ms, mapr) when is_set(ms) and is_mapper(mapr) do
+    Enum.reduce(ms, MapSet.new(), fn x, out -> 
+      MapSet.put(out, mapr.(x)) 
+    end)
+  end
+
+  def map(ms, map) when is_set(ms) and is_map(map) do
+    Enum.reduce(ms, MapSet.new(), fn x, out when is_map_key(map,x) -> 
+      MapSet.put(out, map[x]) 
+    end)
   end
 end
