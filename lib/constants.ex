@@ -16,10 +16,10 @@ defmodule Exa.Constants do
       @default_locale_name "en_US"
       @default_locale {:en, :US, nil, nil}
 
-      # maximum timeout (ms) to limit compute processes
-      # when timeout is an argument to an expiring computation
-      # this value is the default and also the maximum limit
-      @timeout 20_000
+      # maximum elapsed time (ms) to limit a compute process
+      # when time_limit is an argument to an expiring computation
+      # this value is the default and also the maximum limit for the argument
+      @max_duration 20_000
 
       # runtime private data for distribution
       @priv_dir :code.priv_dir(:exa)
