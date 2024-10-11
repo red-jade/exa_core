@@ -1,9 +1,9 @@
 defmodule Exa.MapTest do
   use ExUnit.Case
 
-  doctest Exa.Map
-
   import Exa.Map
+
+  doctest Exa.Map
 
   test "map" do
     abc = %{"a" => -1, "b" => 2, "c" => 3}

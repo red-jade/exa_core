@@ -1,7 +1,7 @@
 defmodule Exa.SetTest do
   use ExUnit.Case
 
-  doctest Exa.Set
+  import Exa.Set
 
-  # import Exa.Set
+  doctest Exa.Set
 end
