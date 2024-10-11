@@ -34,6 +34,10 @@ defmodule Exa.Types do
   @type while_reducer(t, acc) :: (t, acc -> {:cont, acc} | {:halt, acc})
   defguard is_whiler(red) when is_function(red, 2)
 
+  @typedoc "A mapping that is either a map or a mapper function."
+  @type mapping(a, b) :: mapper(a,b) | %{a => b} 
+  defguard is_mapping(mapi) when is_map(mapi) or is_mapper(mapi)
+
   # atom ----------
 
   defguard is_nonnil_atom(a) when is_atom(a) and not is_nil(a)
