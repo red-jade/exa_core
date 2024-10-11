@@ -472,6 +472,7 @@ defmodule Exa.Math do
 
   @doc """
   Factorial function `n!`.
+
   The definition is a recurrence relation:
   - `0!` is defined to be `1`
   - `n! = n * (n-1)!`
@@ -526,7 +527,56 @@ defmodule Exa.Math do
   def permutations(ls), do: for(h <- ls, t <- permutations(ls -- [h]), do: [h | t])
 
   @doc """
+  Get the number of all permutations from a List of Lists (LoL).
+
+  Each sublist is permuted and combined in sequence
+  with all the other sub-permutations.
+
+  The number of possibilities is 
+  the product of the factorials of all lengths of input sublists.
+
+  ## Examples:
+      iex> n_subpermutations([[1,2], [3,4,5]])
+      12
+      iex> n_subpermutations([[1,2,3,4,5], []])
+      120
+  """
+  @spec n_subpermutations([list()]) :: [list()]
+  def n_subpermutations(lol) when is_list(lol) do
+    Enum.reduce(lol, 1, fn ls, n -> n * fac(length(ls)) end)
+  end
+
+  @doc """
+  Get concatenations of all permutations from a List of Lists (LoL).
+
+  Each sublist is permuted and combined in sequence
+  with all the other sub-permutations.
+
+  The result is another List of Lists, where:
+  - all the lists have the same length,
+    equal to the flattened length of the input LoL.
+  - the number of lists is equal to `n_subpermutations/1`,
+    which is the product of factorials of lengths
+
+  ## Examples:
+
+      iex> subpermutations([[1,2], [3,4]])
+      [[1,2,3,4], [1,2,4,3], [2,1,3,4], [2,1,4,3]]
+
+      iex> subpermutations([[1,2], []])
+      [[1,2], [2,1]]
+  """
+  @spec subpermutations([list()]) :: [list()]
+
+  def subpermutations([hs | ts]) do
+    for h <- permutations(hs), t <- subpermutations(ts), do: List.flatten([h | t])
+  end
+
+  def subpermutations([]), do: [[]]
+
+  @doc """
   Get the number of selections for a List of Lists (LoL).
+
   A selection takes one value from each list in the sequence.
 
   The result will be the product of all lengths in the original LoL.
@@ -534,10 +584,8 @@ defmodule Exa.Math do
   the result will be zero.
 
   ## Examples
-
       iex> n_selections([[1,2], [3,4]])
       4
-
       iex> n_selections([[1,2], []])
       0
   """
@@ -554,6 +602,7 @@ defmodule Exa.Math do
 
   @doc """
   Get all ordered selections taken from a List of Lists (LoL).
+  
   A selection takes one value from each list in the sequence.
 
   The length of each result will be the length of the original LoL.
