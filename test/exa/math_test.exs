@@ -2,8 +2,10 @@ defmodule Exa.MathTest do
   use ExUnit.Case
 
   import Exa.Math
+  import Exa.Combine
 
   doctest Exa.Math
+  doctest Exa.Combine
 
   test "frac" do
     vals = [-1.1, -1.0, -0.9, -0.4, 0.0, 0.1, 0.7, 1.0, 1.2]

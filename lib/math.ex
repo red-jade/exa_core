@@ -484,160 +484,35 @@ defmodule Exa.Math do
       1
   """
   @spec fac(non_neg_integer()) :: non_neg_integer()
-  def fac(n) when is_int_nonneg(n), do: do_fac(n, 0, 1)
-
-  # truncated factorial 
-  # n * (n-1) * (n-2) ... (n-k+1)
-  defp do_fac(k, k, f), do: f
-  defp do_fac(n, k, f), do: do_fac(n - 1, k, n * f)
+  def fac(n) when is_int_nonneg(n), do: do_fac(n, n, 1)
 
   @doc """
-  Number of permutations of k elements taken from a collection of size n.
-  For a permutation, the ordering of the k elements is significant (list semantics).
+  Truncated factorial function `n! / (n-k)!` for `0 <= k <= n`.
 
-  The formula is: `nPk = n! / (n-k)!`
+  The definition is:
+  - `0!` is defined to be `1`
+  - `n! / (n-k)! = n * (n-1) * ... * (n-k+1)`
+
+  If `k > n` the result is `0`.
 
   ## Examples
-      iex> n_permutations(5,3)
-      60
-  """
-  @spec n_permutations(non_neg_integer(), non_neg_integer()) :: pos_integer()
-  def n_permutations(n, k) when is_int_nonneg(n) and is_int_nonneg(k) and k <= n do
-    div(fac(n), fac(n - k))
-  end
-
-  @doc """
-  Get all permutations of a list.
-
-  For a list of length `n`, the number of permutations will be `n!`.
-
-  If the list is empty, there will be one permutation, 
-  which is just the empty list.
-
-  ## Examples
-
-      iex> permutations([1,2,3])
-      [[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]]
-
-      iex> permutations([])
-      [[]]
-  """
-  @spec permutations(list()) :: [list()]
-  def permutations([]), do: [[]]
-  def permutations(ls), do: for(h <- ls, t <- permutations(ls -- [h]), do: [h | t])
-
-  @doc """
-  Get the number of all permutations from a List of Lists (LoL).
-
-  Each sublist is permuted and combined in sequence
-  with all the other sub-permutations.
-
-  The number of possibilities is 
-  the product of the factorials of all lengths of input sublists.
-
-  ## Examples:
-      iex> n_subpermutations([[1,2], [3,4,5]])
-      12
-      iex> n_subpermutations([[1,2,3,4,5], []])
+      iex> fac(6,3)
       120
-  """
-  @spec n_subpermutations([list()]) :: [list()]
-  def n_subpermutations(lol) when is_list(lol) do
-    Enum.reduce(lol, 1, fn ls, n -> n * fac(length(ls)) end)
-  end
-
-  @doc """
-  Get concatenations of all permutations from a List of Lists (LoL).
-
-  Each sublist is permuted and combined in sequence
-  with all the other sub-permutations.
-
-  The result is another List of Lists, where:
-  - all the lists have the same length,
-    equal to the flattened length of the input LoL.
-  - the number of lists is equal to `n_subpermutations/1`,
-    which is the product of factorials of lengths
-
-  ## Examples:
-
-      iex> subpermutations([[1,2], [3,4]])
-      [[1,2,3,4], [1,2,4,3], [2,1,3,4], [2,1,4,3]]
-
-      iex> subpermutations([[1,2], []])
-      [[1,2], [2,1]]
-  """
-  @spec subpermutations([list()]) :: [list()]
-
-  def subpermutations([hs | ts]) do
-    for h <- permutations(hs), t <- subpermutations(ts), do: List.flatten([h | t])
-  end
-
-  def subpermutations([]), do: [[]]
-
-  @doc """
-  Get the number of selections for a List of Lists (LoL).
-
-  A selection takes one value from each list in the sequence.
-
-  The result will be the product of all lengths in the original LoL.
-  If there is any empty list in the sequence, 
-  the result will be zero.
-
-  ## Examples
-      iex> n_selections([[1,2], [3,4]])
-      4
-      iex> n_selections([[1,2], []])
+      iex> fac(5,0)
+      1
+      iex> fac(5,5)
+      120
+      iex> fac(5,10)
       0
   """
-  @spec n_selections([list()]) :: non_neg_integer()
+  @spec fac(non_neg_integer(), non_neg_integer()) :: non_neg_integer()
+  def fac(n, k) when is_int_nonneg(n) and is_int_nonneg(k) and k <= n, do: do_fac(n, k, 1)
+  def fac(n, k) when is_int_nonneg(n) and is_int_nonneg(k) and k > n, do: 0
 
-  def n_selections([]), do: 0
-
-  def n_selections(lol) do
-    Enum.reduce_while(lol, 1, fn
-      [], _ -> {:halt, 0}
-      ls, n -> {:cont, n * length(ls)}
-    end)
-  end
-
-  @doc """
-  Get all ordered selections taken from a List of Lists (LoL).
-  
-  A selection takes one value from each list in the sequence.
-
-  The length of each result will be the length of the original LoL.
-
-  The number of results will be the product of all lengths in the original LoL.
-
-  If there is an empty list in the LoL input,
-  the result will be the empty list.
-
-  ## Examples
-
-      iex> selections([[1,2], [3,4]])
-      [[1,3], [1,4], [2,3], [2,4]]
-
-      iex> selections([[1,2], []])
-      []
-  """
-  @spec selections([list()]) :: [list()]
-  def selections([]), do: [[]]
-  def selections([hs | ts]), do: for(h <- hs, t <- selections(ts), do: [h | t])
-
-  @doc """
-  Number of combinations of k elements taken from a collection of size n.
-  For a combination, the ordering of the k elements does not matter (set semantics).
-
-  The formula is: `nCk = n! / k! (n-k)!`
-
-  ## Examples
-      iex> n_combinations(5,3)
-      10
-  """
-  @spec n_combinations(non_neg_integer(), non_neg_integer()) :: pos_integer()
-  def n_combinations(n, k) when is_int_nonneg(n) and is_int_nonneg(k) and k <= n do
-    div(do_fac(n, n - k, 1), fac(k))
-  end
+  # truncated factorial: n * (n-1) * (n-2) ... (n-k+1)
+  @spec do_fac(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: non_neg_integer()
+  defp do_fac(_, 0, f), do: f
+  defp do_fac(n, k, f), do: do_fac(n - 1, k - 1, n * f)
 
   # ------------
   # trigonometry
