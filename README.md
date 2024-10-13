@@ -17,6 +17,8 @@ Module path: `Exa`
 - `Indent`: an indentable text output formatter.
   
 - `Math`: floating-point arithmetic and wrappers for Erlang `:math`.
+
+- `Combine`: permutations and combinations.
   
 - `Parse`: basic combinators for simple types.
 
