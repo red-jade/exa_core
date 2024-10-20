@@ -12,6 +12,7 @@ defmodule Exa.String do
 
   alias Exa.Binary
   alias Exa.Convert
+  alias Exa.Fun
 
   @typedoc "Error when strings are not equal."
   @type mismatch() ::
@@ -471,7 +472,7 @@ defmodule Exa.String do
   """
   @spec all_class?(String.t(), String.t()) :: bool()
   def all_class?(str, class \\ "space") when is_string(str) and is_string(class) do
-    re = success!(Regex.compile("^([[:#{class}:]]*)$"))
+    re = Fun.success!(Regex.compile("^([[:#{class}:]]*)$"))
     Regex.match?(re, str)
   end
 
@@ -496,7 +497,7 @@ defmodule Exa.String do
   """
   @spec any_class?(String.t(), String.t()) :: bool()
   def any_class?(str, class \\ "space") when is_string(str) and is_string(class) do
-    re = success!(Regex.compile("[[:#{class}:]]"))
+    re = Fun.success!(Regex.compile("[[:#{class}:]]"))
     Regex.match?(re, str)
   end
 
