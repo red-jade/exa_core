@@ -34,8 +34,12 @@ defmodule Exa.Types do
   @type while_reducer(t, acc) :: (t, acc -> {:cont, acc} | {:halt, acc})
   defguard is_whiler(red) when is_function(red, 2)
 
+  @typedoc "A reducer with a prompt return by throwing `{:return, result}`."
+  @type terminator!(t, acc) :: (t, acc -> acc)
+  defguard is_terminator(arnie) when is_function(arnie, 2)
+
   @typedoc "A mapping that is either a map or a mapper function."
-  @type mapping(a, b) :: mapper(a,b) | %{a => b} 
+  @type mapping(a, b) :: mapper(a, b) | %{a => b}
   defguard is_mapping(mapi) when is_map(mapi) or is_mapper(mapi)
 
   # atom ----------
@@ -132,7 +136,7 @@ defmodule Exa.Types do
 
   @typedoc "A non-zero finite timeout (ms)."
   @type timeout1() :: pos_integer()
-  defguard is_timeout1(t) when is_integer(t) and t > 0
+  defguard is_timeout1(t) when is_int_pos(t)
 
   @typedoc """
   Microsecond clock time.
@@ -140,6 +144,9 @@ defmodule Exa.Types do
   The value taken from `:erlang.monotonic_time`.
   Note that since Erlang OTP 26,
   this value can be negative.
+
+  Never use the raw value, only use comparisons 
+  with later calls to monotonic time.
   """
   @type time_micros() :: integer()
 
@@ -147,9 +154,7 @@ defmodule Exa.Types do
   @type duration_micros() :: non_neg_integer()
 
   @typedoc "Conventional millisecond times and durations (sleep, after, etc.)."
-  @type time_millis() :: non_neg_integer()
-
-  defguard is_time(t) when is_integer(t) and t >= 0
+  @type duration_millis() :: non_neg_integer()
 
   # float ----------
 
@@ -336,6 +341,66 @@ defmodule Exa.Types do
 
   defguard is_uri(uri) when is_struct(uri, URI)
 
+  # results ----------
+
+  @typedoc "Standard discriminated return."
+  @type result(t) :: {:ok, t} | {:error, any()}
+
+  defguard is_ok(ok) when is_tuple_tag(ok, 2, :ok)
+  defguard is_err(err) when is_tuple_tag(err, 2, :error)
+  defguard is_result(res) when is_tuple_fix(res, 2) and elem(res, 0) in [:ok, :error]
+
+  @typedoc """
+  Standard return with timeout.
+
+  Single functions may return `{:timeout, nil}`,
+  but map or reduce may return a partial result
+  (truncated list or partial accumulator).
+  """
+  @type tresult(t) :: result(t) | {:timeout, nil | t}
+
+  defguard is_tresult(res) when is_tuple_fix(res, 2) and elem(res, 0) in [:ok, :error, :timeout]
+
+  # Processes and messages ----------
+
+  # trivial alias to make it smaller
+  defguard is_ref(ref) when is_reference(ref)
+
+  @typedoc "A standard message format, with payload type parameter."
+  @type message(t) :: {pid(), reference(), t}
+
+  defguard is_message(m) when is_tuple_fix(m, 3) and is_pid(elem(m, 0)) and is_ref(elem(m, 1))
+
+  @typedoc """
+  A unique message identifier.
+  Contains a source PID and a unique Reference.
+  """
+  @type pidref() :: {pid(), reference()}
+
+  defguard is_pidref(m) when is_tuple_fix(m, 2) and is_pid(elem(m, 0)) and is_ref(elem(m, 1))
+
+  @typedoc """
+  A match for processing messages.
+
+  The PID and Reference will label 0th and/or 1st elements of the message.
+
+  If the match or the message do not conform to the standard message pattern,
+  then assume a generic constant message (not included).
+  """
+  @type match() :: pid() | reference() | pidref()
+
+  defguardp is_match_pid(pid, msg) when is_pid(pid) and elem(msg, 0) == pid
+  defguardp is_match_ref(ref, msg) when is_ref(ref) and elem(msg, 1) == ref
+
+  defguard is_match_prf(prf, msg)
+           when is_pidref(prf) and elem(msg, 0) == elem(prf, 0) and elem(msg, 1) == elem(prf, 1)
+
+  defguard is_match(mat, msg)
+           when is_message(msg) and
+                  (is_match_prf(mat, msg) or
+                     is_match_pid(mat, msg) or
+                     is_match_ref(mat, msg))
+
   # files ----------
 
   @typedoc """
@@ -395,27 +460,4 @@ defmodule Exa.Types do
 
   @type f64() :: float()
   defguard is_f64(x) when is_float(x) and @min_f64 <= x and x <= @max_f64
-
-  # ------------------------------------------
-  # convert return values to errors on failure
-
-  defmodule ReturnValueError do
-    defexception message: "Function returned an error value."
-  end
-
-  @doc "Test if a return value is an error tuple."
-  defguard is_err(err) when is_tuple_tag(err, 2, :error)
-
-  @typedoc """
-  Function return value.
-  """
-  @type retval(t) :: {:ok, t} | {:error, any()}
-
-  @doc """
-  Assume success and extract returned value. 
-  Throw an error on failure.
-  """
-  @spec success!(retval(t)) :: t when t: var
-  def success!({:ok, val}), do: val
-  def success!({:error, err}), do: raise(ReturnValueError, message: err)
 end
