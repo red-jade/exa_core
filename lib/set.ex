@@ -2,6 +2,7 @@ defmodule Exa.Set do
   @moduledoc "Set utilities."
 
   import Exa.Types
+  alias Exa.Types, as: E
 
   @doc "Update a set with a collection of new entries."
   @spec adds(MapSet.t(), Enumerable.t()) :: MapSet.t()
@@ -144,14 +145,14 @@ defmodule Exa.Set do
   @spec map(MapSet.t(), E.mapping(any(), any())) :: MapSet.t()
 
   def map(ms, mapr) when is_set(ms) and is_mapper(mapr) do
-    Enum.reduce(ms, MapSet.new(), fn x, out -> 
-      MapSet.put(out, mapr.(x)) 
+    Enum.reduce(ms, MapSet.new(), fn x, out ->
+      MapSet.put(out, mapr.(x))
     end)
   end
 
   def map(ms, map) when is_set(ms) and is_map(map) do
-    Enum.reduce(ms, MapSet.new(), fn x, out when is_map_key(map,x) -> 
-      MapSet.put(out, map[x]) 
+    Enum.reduce(ms, MapSet.new(), fn x, out when is_map_key(map, x) ->
+      MapSet.put(out, map[x])
     end)
   end
 end
