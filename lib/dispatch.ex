@@ -60,8 +60,8 @@ defmodule Exa.Dispatch do
   ## See Also
 
   See the guards:
-  - `Exa.Types.is_tag_tuple/2` for variable length tagged tuple
-  - `Exa.Types.is_tag_tuple/3` for fixed length tagged tuple
+  - `Exa.Types.is_tuple_tag/2` for variable length tagged tuple
+  - `Exa.Types.is_tuple_tag/3` for fixed length tagged tuple
 
   ## Extended Example
 
