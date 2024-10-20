@@ -494,7 +494,7 @@ defmodule Exa.File do
          %{:comments => comms, :trim => trim?, :blank => blank?, :split => split?}
        ) do
     path
-    |> File.stream!(opts, :line)
+    |> File.stream!(:line, opts)
     |> trim(trim?)
     |> filter(blank?, comms)
     |> splits(split?)
