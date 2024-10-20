@@ -60,11 +60,21 @@ defmodule Exa.Stopwatch do
   def start(), do: now()
 
   @doc """
-  Get the elapsed time since a previous call to `now()`.
+  Get the elapsed time (µs) since a previous call to `start()` or `now()`.
   The value maybe zero.
   """
   @spec elapsed(E.time_micros()) :: E.duration_micros()
   def elapsed(start), do: now() - start
+
+  @doc """
+  Get the elapsed time (ms) since a previous call to `start()` or `now()`.
+  The value maybe zero.
+
+  The conversion from µs to ms is by integer division,
+  so a truncation (rounding down).
+  """
+  @spec elapsed_ms(E.time_micros()) :: E.duration_micros()
+  def elapsed_ms(start), do: div(now() - start, 1_000)
 
   @doc """
   Get the average elapsed time to execute a function
