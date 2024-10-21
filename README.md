@@ -11,7 +11,7 @@ Module path: `Exa`
 ## Features
 
 - Utilities relating to specific language modules or features:<br>   
-  Binary, File, List, Map, Tuple, Set (MapSet), String,<br>
+  Binary, File, Fun, List, Map, Tuple, Set (MapSet), String,<br>
   Text (chardata), Message, Option, Process, Random, System.
   
 - `Indent`: an indentable text output formatter.
@@ -19,6 +19,8 @@ Module path: `Exa`
 - `Math`: floating-point arithmetic and wrappers for Erlang `:math`.
 
 - `Combine`: permutations and combinations.
+
+- `Exec` and `Process`: map-reduce with timeouts, errors and parallelism.
   
 - `Parse`: basic combinators for simple types.
 
