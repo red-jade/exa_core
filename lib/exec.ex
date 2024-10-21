@@ -95,7 +95,7 @@ defmodule Exa.Exec do
   Similar to `Task.async/1`.
   """
   @spec exec(fun(), list()) :: E.pidref()
-  def exec(fun, args) when is_function(fun) and is_list(args) do
+  def exec(fun, args \\ []) when is_function(fun) and is_list(args) do
     do_exec(make_ref(), Fun.safe(fun), args)
   end
 
