@@ -2,7 +2,9 @@ defmodule Exa.Combine do
   @moduledoc """
   Ordering of sequences: permutations, combinations and selections.
   """
+  use Exa.Constants
   import Exa.Types
+  alias Exa.Types, as: E
 
   @doc """
   Number of permutations of a list.
@@ -50,14 +52,29 @@ defmodule Exa.Combine do
   and the result is just the initial value.
 
   The reducer is invoked for each full permutation.
-  The reducer may throw a final result for prompt return
-  (`reduce_while` semantics).
   """
-  @spec reduce_perms(list(), a, E.reducer(list(), a)) :: a when a: var
+  @spec reduce_perms(list(), a, E.terminator!(list(), a)) :: a when a: var
   def reduce_perms(ls, init, redr) when is_list(ls) and is_reducer(redr) do
-    Enum.reduce(ls, init , fn h, acc -> 
+    Enum.reduce(ls, init, fn h, acc ->
       Enum.reduce(permutations(ls -- [h]), acc, fn t, acc -> redr.([h | t], acc) end)
     end)
+  end
+
+  @doc """
+  Find a permutation and return promptly if a target is found.
+
+  The terminator function should throw `{:return, result`} on successful match.
+
+  Return either:
+  - `{:ok, result}` the prompt result value thrown by the terminator function
+  - `{:no_match, final_accumulator}` if the search completed unsuccessfully
+  """
+  @spec find_permutation(list(), a, E.terminator!(list(), a)) :: {:ok, any()} | {:no_match, a}
+        when a: var
+  def find_permutation(ls, init, terminate!) when is_list(ls) and is_terminator(terminate!) do
+    {:no_match, reduce_perms(ls, init, terminate!)}
+  catch
+    {:return, result} -> {:ok, result}
   end
 
   @doc """
@@ -133,13 +150,13 @@ defmodule Exa.Combine do
   def nselects(lol), do: do_nsel(lol, 1)
 
   @spec do_nsel([list()], non_neg_integer()) :: non_neg_integer()
-  defp do_nsel([[]|_], _n), do: 0
-  defp do_nsel([hs|ts], n), do: do_nsel(ts, n * length(hs))
+  defp do_nsel([[] | _], _n), do: 0
+  defp do_nsel([hs | ts], n), do: do_nsel(ts, n * length(hs))
   defp do_nsel([], n), do: n
 
   @doc """
   Get all ordered selections taken from a List of Lists (LoL).
-  
+
   A selection takes one value from each list in the sequence.
 
   The length of each result will be the length of the original LoL.
@@ -169,13 +186,32 @@ defmodule Exa.Combine do
 
   The reducer is invoked for each full selection.
   The reducer may throw a final result for prompt return
-  (`reduce_while` semantics).
+  (`reduce_while` semantics but using throw/rescue).
   """
-  @spec reduce_selects(list(), a, E.reducer(list(), a)) :: a when a: var
-  def reduce_selects([hs|ts], init, redr) when is_reducer(redr) do
-    Enum.reduce(hs, init , fn h, acc -> 
+  @spec reduce_selects(list(), a, E.terminator!(list(), a)) :: a
+        when a: var
+  def reduce_selects([hs | ts], init, redr) when is_terminator(redr) do
+    Enum.reduce(hs, init, fn h, acc ->
       Enum.reduce(selections(ts), acc, fn t, acc -> redr.([h | t], acc) end)
     end)
+  end
+
+  @doc """
+  Find a selection and return promptly if a target is found.
+
+  The terminator function should throw `{:return, result`} on successful match.
+
+  Return either:
+  - `{:ok, result}` the prompt result value thrown by the terminator function
+  - `{:no_match, final_accumulator}` if the search completed unsuccessfully
+  """
+  @spec find_selection(list(), a, E.terminator!(list(), a)) ::
+          {:ok, any()} | {:no_match, a}
+        when a: var
+  def find_selection(ls, init, terminate!) when is_list(ls) and is_terminator(terminate!) do
+    {:no_match, reduce_selects(ls, init, terminate!)}
+  catch
+    {:return, result} -> {:ok, result}
   end
 
   @doc """
@@ -222,10 +258,10 @@ defmodule Exa.Combine do
   """
   @spec permutations(list(), non_neg_integer()) :: [list()]
 
-  def permutations(_ls,0), do: [[]]
+  def permutations(_ls, 0), do: [[]]
 
   def permutations(ls, k) when is_int_nonneg(k) and k <= length(ls) do
-    Enum.reduce(combinations(ls,k), [], fn c, ps -> ps ++ permutations(c) end)
+    Enum.reduce(combinations(ls, k), [], fn c, ps -> ps ++ permutations(c) end)
   end
 
   def permutations(_ls, _k), do: []
@@ -274,10 +310,10 @@ defmodule Exa.Combine do
   """
   @spec combinations(list(), non_neg_integer()) :: [list()]
 
-  def combinations(_ls,0), do: [[]]
+  def combinations(_ls, 0), do: [[]]
 
-  def combinations([h|ts]=ls, k) when is_int_nonneg(k) and k <= length(ls) do
-    Enum.map(combinations(ts,k-1), &[h|&1]) ++ combinations(ts,k)
+  def combinations([h | ts] = ls, k) when is_int_nonneg(k) and k <= length(ls) do
+    Enum.map(combinations(ts, k - 1), &[h | &1]) ++ combinations(ts, k)
   end
 
   def combinations(_ls, _k), do: []

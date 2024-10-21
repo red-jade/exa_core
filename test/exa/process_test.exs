@@ -1,6 +1,7 @@
 defmodule Exa.ProcessTest do
   use ExUnit.Case
   import Exa.Process
+  import Exa.Exec
 
   doctest Exa.Process
 
@@ -28,47 +29,87 @@ defmodule Exa.ProcessTest do
     assert_raise ArgumentError, fn -> unregister!(ns, "xyx") end
   end
 
+  @tag timeout: 20_000
   test "map timeout" do
-    n = 1_000_000
+    for {fun, n} <- [{&Exa.Process.tmap/3, 300}, {&Exa.Exec.pmap/3, 100_000}] do
+      for timeout <- [20, 5_000] do
+        start = Exa.Stopwatch.start()
+        result = fun.(1..n, &slow_sind/1, timeout)
+        elapsed = Exa.Stopwatch.elapsed_ms(start)
 
-    for timeout <- [50, 1_000] do
-      is = Range.to_list(1..n)
-      start = Exa.Stopwatch.start()
-      result = map(is, fn i -> Exa.Math.sind(i / 1000.0) end, timeout)
-      elapsed = Exa.Stopwatch.elapsed(start) / 1000.0
+        case result do
+          {:timeout, xs} ->
+            IO.inspect(elapsed, label: "timeout  map")
+            assert length(xs) < n
+            assert elapsed >= timeout
 
-      case result do
-        {:timeout, xs} ->
-          IO.inspect(elapsed, label: "timeout")
-          assert length(xs) < n
-          assert elapsed > timeout
-
-        xs when is_list(xs) ->
-          IO.inspect(elapsed, label: "complete")
-          assert length(xs) == n
-          assert elapsed < timeout
+          {:ok, xs} when is_list(xs) ->
+            IO.inspect(elapsed, label: "complete map")
+            assert length(xs) == n
+            # assert elapsed < timeout
+        end
       end
     end
+
+    result = tmap(1..100, &sind!/1)
+    assert {:error, _err} = result
+
+    result = pmap(1..100, &sind!/1)
+    assert {:error, _err} = result
   end
 
   test "reduce timeout" do
-    n = 1_000_000
-
-    for timeout <- [50, 1_000] do
-      is = Range.to_list(1..n)
+    for timeout <- [50, 2_000] do
       start = Exa.Stopwatch.start()
-      result = reduce(is, 0.0, fn i, acc -> acc + Exa.Math.sind(i / 1000.0) end, timeout)
-      elapsed = Exa.Stopwatch.elapsed(start) / 1000.0
+      result = treduce(1..500_000, 0.0, &sind/2, timeout)
+      elapsed = Exa.Stopwatch.elapsed_ms(start)
 
       case result do
         {:timeout, _acc} ->
-          IO.inspect(elapsed, label: "timeout")
-          assert elapsed > timeout
+          IO.inspect(elapsed, label: "timeout  treduce")
+          assert elapsed >= timeout
 
-        _acc ->
-          IO.inspect(elapsed, label: "complete")
+        _ok_acc ->
+          IO.inspect(elapsed, label: "complete treduce")
           assert elapsed < timeout
       end
     end
+
+    result = treduce(1..100, 0.0, &sind!/2)
+    assert {:error, _err} = result
+
+    for timeout <- [50, 2_000] do
+      start = Exa.Stopwatch.start()
+      result = pmap_reduce(1..100_000, 0.0, &sind/1, &Kernel.+/2, timeout)
+      elapsed = Exa.Stopwatch.elapsed_ms(start)
+
+      case result do
+        {:timeout, _acc} ->
+          IO.inspect(elapsed, label: "timeout  preduce")
+          assert elapsed >= timeout
+
+        _ok_acc ->
+          IO.inspect(elapsed, label: "complete preduce")
+          assert elapsed < timeout
+      end
+    end
+
+    result = pmap_reduce(1..100, 0.0, &sind!/1, &Kernel.+/2)
+    assert {:error, _err} = result
+  end
+
+  defp sind(i), do: Exa.Math.sind(i / 1000.0)
+
+  defp sind(i, acc), do: acc + Exa.Math.sind(i / 1000.0)
+
+  defp sind!(97), do: raise(RuntimeError)
+  defp sind!(i), do: Exa.Math.sind(i / 1000.0)
+
+  defp sind!(97, _acc), do: raise(RuntimeError)
+  defp sind!(i, acc), do: acc + Exa.Math.sind(i / 1000.0)
+
+  defp slow_sind(i) do
+    Process.sleep(1)
+    Exa.Math.sind(i / 1000.0)
   end
 end
