@@ -19,7 +19,7 @@ defmodule Exa.Constants do
       # maximum elapsed time (ms) to limit a compute process
       # when time_limit is an argument to an expiring computation
       # this value is the default and also the maximum limit for the argument
-      @max_duration 20_000
+      @max_duration 60_000
 
       # runtime private data for distribution
       @priv_dir :code.priv_dir(:exa)
