@@ -1,12 +1,19 @@
 defmodule Exa.Process do
   @moduledoc """
   Utilities to register and find processes in a namespace.
-
   A namespace is a sequence of names (strings, atoms).
+
+  Local map and reduce with timeout.
+  No processes are spawned.
+  All executions are within the current (self) process.
+  If you want parallel map and reduce, see `Exa.Exec`.
   """
   use Exa.Constants
   import Exa.Types
   alias Exa.Types, as: E
+
+  alias Exa.Fun
+  alias Exa.Fun, as: F
 
   # -----
   # types
@@ -115,6 +122,8 @@ defmodule Exa.Process do
   # useful single process interrupts
   # --------------------------------
 
+  @typep timer() :: {timer :: :timer.tref(), event :: {:interrupt, reference()}}
+
   @doc """
   Map with a finite timeout (ms).
 
@@ -126,31 +135,27 @@ defmodule Exa.Process do
   then interleaves computation steps
   with a zero-wait test to receive the interrupt (`receive after 0`).
   """
-  @spec map([a], E.mapper(a, b), E.timeout1()) ::
-          [b] | {:timeout, [b]}
-        when a: var, b: var
-  def map(ls, mapr, dt \\ @max_duration) when is_mapper(mapr) and is_timeout1(dt) do
-    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(:interrupt)
-    do_map_timer(ls, mapr, tref, [])
+  @spec tmap(Enumerable.t(a), E.mapper(a, b), E.timeout1()) :: E.tresult([b]) when a: var, b: var
+  def tmap(ls, mapr, dt \\ @max_duration) when is_mapper(mapr) and is_timeout1(dt) do
+    do_tmap(ls, Fun.safe(mapr), start_timer(dt), [])
   end
 
-  @spec do_map_timer([a], E.mapper(a, b), :timer.tref(), [b]) ::
-          [b] | {:timeout, [b]}
+  @spec do_tmap(Enumerable.t(a), F.safe_mapper(a, b), timer(), [b]) :: [b] | {:timeout, [b]}
         when a: var, b: var
-  defp do_map_timer(ls, mapr, tref, out) do
-    # TODO - adaptive batch to get more executions per receive block
+  defp do_tmap(ls, mapr, {_, interrupt} = timer, out) do
     receive do
-      :interrupt -> {:timeout, Enum.reverse(out)}
+      ^interrupt -> {:timeout, Enum.reverse(out)}
     after
       0 ->
         case Enum.split(ls, 1) do
           {[], []} ->
-            :timer.cancel(tref)
-            Exa.Message.purge(:interrupt)
-            Enum.reverse(out)
+            stop_timer({:ok, Enum.reverse(out)}, timer)
 
           {[h], t} ->
-            do_map_timer(t, mapr, tref, [mapr.(h) | out])
+            case mapr.([h]) do
+              {:error, _} = err -> stop_timer(err, timer)
+              {:ok, val} -> do_tmap(t, mapr, timer, [val | out])
+            end
         end
     end
   end
@@ -160,35 +165,35 @@ defmodule Exa.Process do
 
   No new processes is spawned. 
   The call is blocking. All computation happens in this _self_ process.
-  (so not the same as `Task.asynch` + `Task.await`).
+  (so not the same as `Exa.Exec` or `Task.asynch` + `Task.await`).
 
   The implementation configures an interrupt for itself (`:timer.send_after/2`),
   then interleaves computation steps
   with a zero-wait test to receive the interrupt (`receive after 0`).
   """
-  @spec reduce([a], acc, E.reducer(a, acc), E.timeout1()) :: acc | {:timeout, acc}
+  @spec treduce(Enumerable.t(a), acc, E.reducer(a, acc), E.timeout1()) :: E.tresult(acc)
         when a: var, acc: var
-  def reduce(ls, init, redr, dt \\ @max_duration) when is_reducer(redr) and is_timeout1(dt) do
-    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(:interrupt)
-    do_reduce_timer(ls, init, redr, tref)
+  def treduce(ls, init, redr, dt \\ @max_duration) when is_reducer(redr) and is_timeout1(dt) do
+    do_treduce(ls, init, Fun.safe(redr), start_timer(dt))
   end
 
-  @spec do_reduce_timer([a], acc, E.reducer(a, acc), :timer.tref()) :: acc | {:timeout, acc}
+  @spec do_treduce(Enumerable.t(), acc, F.safe_reducer(acc), timer()) ::
+          acc | {:timeout, acc}
         when a: var, acc: var
-  defp do_reduce_timer(ls, acc, redr, tref) do
-    # TODO - adaptive batch to get more executions per receive block
+  defp do_treduce(ls, acc, redr, {_, interrupt} = timer) do
     receive do
-      :interrupt -> {:timeout, acc}
+      ^interrupt -> {:timeout, acc}
     after
       0 ->
         case Enum.split(ls, 1) do
           {[], []} ->
-            :timer.cancel(tref)
-            Exa.Message.purge(:interrupt)
-            acc
+            stop_timer({:ok, acc}, timer)
 
           {[h], t} ->
-            do_reduce_timer(t, redr.(h, acc), redr, tref)
+            case redr.([h, acc]) do
+              {:error, _} = err -> stop_timer(err, timer)
+              {:ok, new_acc} -> do_treduce(t, new_acc, redr, timer)
+            end
         end
     end
   end
@@ -206,38 +211,30 @@ defmodule Exa.Process do
 
   The continue/halt semantics are the same as `Enum.reduce_while/3`.
   """
-  @spec reduce_while([a], acc, E.while_reducer(a, acc), E.timeout1()) :: acc | {:timeout, acc}
+  @spec treduce_while(Enumerable.t(a), acc, E.while_reducer(a, acc), E.timeout1()) ::
+          E.tresult(acc)
         when a: var, acc: var
-  def reduce_while(ls, init, redr, dt \\ @max_duration)
+  def treduce_while(ls, init, redr, dt \\ @max_duration)
       when is_whiler(redr) and is_timeout1(dt) do
-    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(:interrupt)
-    do_wreduce_timer(ls, init, redr, tref)
+    do_treduce_while(ls, init, Fun.safe(redr), start_timer(dt))
   end
 
-  @spec do_wreduce_timer([a], acc, E.while_reducer(a, acc), :timer.tref()) ::
-          acc | {:timeout, acc}
+  @spec do_treduce_while(Enumerable.t(), acc, F.safe_reducer(acc), timer()) :: E.tresult(acc)
         when a: var, acc: var
-  defp do_wreduce_timer(ls, acc, redr, tref) do
-    # TODO - adaptive batch to get more executions per receive block
+  defp do_treduce_while(ls, acc, redr, {_, interrupt} = timer) do
     receive do
-      :interrupt -> {:timeout, acc}
+      ^interrupt -> {:timeout, acc}
     after
       0 ->
         case Enum.split(ls, 1) do
           {[], []} ->
-            :timer.cancel(tref)
-            Exa.Message.purge(:interrupt)
-            acc
+            stop_timer({:ok, acc}, timer)
 
           {[h], t} ->
-            case redr.(h, acc) do
-              {:halt, new_acc} ->
-                :timer.cancel(tref)
-                Exa.Message.purge(:interrupt)
-                new_acc
-
-              {:cont, new_acc} ->
-                do_wreduce_timer(t, new_acc, redr, tref)
+            case redr.([h, acc]) do
+              {:error, _} = err -> stop_timer(err, timer)
+              {:ok, {:halt, new_acc}} -> stop_timer({:ok, new_acc}, timer)
+              {:ok, {:cont, new_acc}} -> do_treduce_while(t, new_acc, redr, timer)
             end
         end
     end
@@ -246,6 +243,23 @@ defmodule Exa.Process do
   # -----------------
   # private functions
   # -----------------
+
+  # start a self-interrupting timer
+  @spec start_timer(E.duration_millis()) :: timer()
+  defp start_timer(dt) do
+    interrupt = {:interrupt, make_ref()}
+    {:ok, tref} = dt |> min(@max_duration) |> :timer.send_after(interrupt)
+    {tref, interrupt}
+  end
+
+  # stop a self-interrupting timer
+  # and delete any pending interrupt messages
+  @spec stop_timer(t, timer()) :: t when t: var
+  defp stop_timer(result, {tref, interrupt}) do
+    :timer.cancel(tref)
+    Exa.Message.purge(interrupt)
+    result
+  end
 
   @spec key(ns(), nsseg()) :: nskey()
   def key(ns, name) when is_ns(ns) and is_nsseg(name), do: key(ns ++ [name])
