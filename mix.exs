@@ -3,7 +3,7 @@ defmodule Exa.Core.MixProject do
 
   @lib :exa_core
   @name "Exa Core"
-  @ver "0.2.5"
+  @ver "0.3.0"
 
   # umbrella project
   @exa {:exa,
