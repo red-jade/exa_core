@@ -3,9 +3,11 @@ defmodule Exa.MathTest do
 
   import Exa.Math
   import Exa.Combine
+  import Exa.Stats
 
   doctest Exa.Math
   doctest Exa.Combine
+  doctest Exa.Stats
 
   test "frac" do
     vals = [-1.1, -1.0, -0.9, -0.4, 0.0, 0.1, 0.7, 1.0, 1.2]

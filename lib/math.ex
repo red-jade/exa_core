@@ -470,6 +470,10 @@ defmodule Exa.Math do
   def ipow(n, 3) when is_integer(n), do: n * n * n
   def ipow(n, m) when is_integer(n) and is_int_pos(m), do: trunc(:math.pow(n, m))
 
+  @doc "Square root."
+  @spec sqrt(number()) :: float()
+  def sqrt(x) when is_number(x), do: :math.sqrt(x)
+
   @doc """
   Factorial function `n!`.
 
