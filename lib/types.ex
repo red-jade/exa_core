@@ -158,10 +158,14 @@ defmodule Exa.Types do
 
   # float ----------
 
+  # test for +-0.0
+  # also see Exa.math.zero?
+  defguard is_zero(f) when f == +0.0 or f == -0.0
+
   # positive floats (no tolerance)
   # also see Exa.Math.pos?
   @type pos_float() :: float()
-  defguard is_pos_float(f) when is_float(f) and f > 0.0
+  defguard is_float_pos(f) when is_float(f) and f > 0.0
 
   # non-negative floats (no tolerance)
   # also see Exa.Math.nonneg?
@@ -170,7 +174,7 @@ defmodule Exa.Types do
 
   @typedoc "A floating point tolerance."
   @type epsilon() :: pos_float()
-  defguard is_eps(e) when is_pos_float(e)
+  defguard is_eps(e) when is_float_pos(e)
 
   @typedoc "A normalized float value in the range (0.0,1.0) inclusive."
   @type unit() :: float()
