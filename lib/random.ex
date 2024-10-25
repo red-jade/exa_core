@@ -12,6 +12,7 @@ defmodule Exa.Random do
   import Bitwise
 
   import Exa.Types
+  alias Exa.Types, as: E
 
   @doc """
   Create a random boolean value from a uniform distribution.
@@ -37,7 +38,7 @@ defmodule Exa.Random do
 
   @doc "Create a random integer between _m_ and _n_ inclusive."
   @spec uniform_int(integer(), integer()) :: integer()
-  def uniform_int(m,n) when is_range(m,n) do 
+  def uniform_int(m, n) when is_range(m, n) do
     m1 = m - 1
     m1 + :rand.uniform(n - m1)
   end
@@ -49,7 +50,7 @@ defmodule Exa.Random do
   @spec uniform_intex(pos_integer(), pos_integer()) :: pos_integer()
   def uniform_intex(n, avoid) when is_int_pos(n) and is_in_range(1, avoid, n) do
     case uniform_int(n) do
-      ^avoid -> uniform_int(n, avoid)
+      ^avoid -> uniform_intex(n, avoid)
       i -> i
     end
   end
@@ -76,12 +77,12 @@ defmodule Exa.Random do
   """
   @spec normal_float() :: float()
   def normal_float(), do: :rand.normal()
-  
+
   @doc """
   Create a random float value from a normal distribution,
   with the specified mean and variance.
   """
-  @spec normal_float(mean :: float(), variance :: E.non_neg_float()) :: float()
+  @spec normal_float(mean :: float(), variance :: E.nonneg_float()) :: float()
   def normal_float(u, v) when is_float(u) and is_zero(v), do: u
   def normal_float(u, v) when is_float(u) and is_float_pos(v), do: :rand.normal(u, v)
 end
