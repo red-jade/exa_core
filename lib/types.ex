@@ -314,6 +314,10 @@ defmodule Exa.Types do
 
   # tuple ----------
 
+  @typedoc "A 0-based tuple index."
+  @type tuple_index() :: count()
+  defguard is_tuple_index(tup, i) when is_tuple(tup) and is_count(i) and i < tuple_size(tup)
+
   defguard is_tuple_nonempty(tup) when is_tuple(tup) and tup != {}
 
   defguard is_tuple_fix(tup, n) when is_int_nonneg(n) and is_tuple(tup) and tuple_size(tup) == n
