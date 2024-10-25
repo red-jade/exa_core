@@ -75,6 +75,8 @@ defmodule Exa.Types do
 
   defguard is_int_pos(i) when is_integer(i) and i > 0
 
+  # note these are in Integer, but easier to make avaiable here
+  
   defguard is_int_even(i) when is_integer(i) and (i &&& 0x01) == 0
 
   defguard is_int_odd(i) when is_integer(i) and (i &&& 0x01) == 1
