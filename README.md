@@ -12,15 +12,21 @@ Module path: `Exa`
 
 - Utilities relating to specific language modules or features:<br>   
   Binary, File, Fun, List, Map, Tuple, Set (MapSet), String,<br>
-  Text (chardata), Message, Option, Process, Random, System.
+  Text (chardata), Message, Option, System.
   
 - `Indent`: an indentable text output formatter.
   
 - `Math`: floating-point arithmetic and wrappers for Erlang `:math`.
 
-- `Combine`: permutations and combinations.
+- `Random`: uniform and normal distributions, wrappers for Erlang `:rand`.
 
-- `Exec` and `Process`: map-reduce with timeouts, errors and parallelism.
+- `Stats`: simple mean, variance, RMS, mode, median.
+
+- `Combine`: permutations, combinations and selections.
+
+- `Process`: wrapper for process dictionary, and map-reduce with self-interrupt timeouts.
+
+- `Exec`: map-reduce with parallelism (timeouts, errors).
   
 - `Parse`: basic combinators for simple types.
 
@@ -42,8 +48,14 @@ It is not accidental that `Exa` is a short prefix.
 
 ## Building
 
-To bootstrap an `exa_xxx` library build, 
-you must run `mix deps.get` twice.
+**To bootstrap an `exa_xxx` library build,**<br>
+**you must update dependencies twice.**
+
+One way to start a build is:
+```
+  $ mix deps.update exa
+  $ mix deps.get
+```
 
 ## Testing
 
