@@ -12,52 +12,64 @@ defmodule Exa.Tuple do
   import Exa.Types
   alias Exa.Types, as: E
 
-  @type tindex() :: E.count()
-  defguard is_tindex(t, i) when is_tuple(t) and is_count(i) and i < tuple_size(t)
-
   @doc "Set the element of a tuple."
-  @spec set(tuple(), tindex(), any()) :: tuple()
-  def set(tup, i, val) when is_tindex(tup, i), do: :erlang.setelement(i + 1, tup, val)
+  @spec set(tuple(), E.tuple_index(), any()) :: tuple()
+  def set(tup, i, val) when is_tuple_index(tup, i), do: :erlang.setelement(i + 1, tup, val)
 
-  @doc "Sum a tuple."
+  @doc "Sum a tuple of numbers."
   @spec sum(tuple()) :: number()
   def sum(tup) when is_tuple_nonempty(tup), do: reduce(tup, 0, &Kernel.+/2)
 
-  @doc "Minimum value of a tuple."
+  @doc "Minimum value of a non-empty tuple."
   @spec min(tuple()) :: any()
   def min(tup) when is_tuple_nonempty(tup), do: reduce(tup, &Kernel.min/2)
 
-  @doc "Maximum value of a tuple."
+  @doc "Maximum value of a non-empty tuple."
   @spec max(tuple()) :: any()
   def max(tup) when is_tuple_nonempty(tup), do: reduce(tup, &Kernel.max/2)
 
-  @doc "Exists over a tuple."
+  @doc """
+  Exists over a tuple.
+  Empty tuple returns `false`.
+  """
   @spec any?(tuple(), E.predicate?(any)) :: bool()
   def any?(tup, pred) when is_tuple(tup) and is_function(pred, 1) do
     reduce(tup, false, fn t, any -> any or pred.(t) end)
   end
 
-  @doc "Forall over a tuple."
+  @doc """
+  Forall over a tuple.
+  Empty tuple returns `true`.
+  """
   @spec all?(tuple(), E.predicate?(any)) :: bool()
   def all?(tup, pred) when is_tuple(tup) and is_pred(pred) do
     reduce(tup, true, fn t, all -> all and pred.(t) end)
   end
 
-  @doc "Sort a list of tuples by the given indexed element values."
-  @spec sort([tuple()], tindex()) :: [tuple()]
+  @doc """
+  Sort a list of tuples by the given indexed element values.
+
+  All members of the list must be tuples.
+  The index must be valid for all tuples in the list.
+  """
+  @spec sort([tuple()], E.tuple_index()) :: [tuple()]
 
   def sort([], _i), do: []
 
-  def sort([h | _] = ts, i) when is_list(ts) and is_tuple(h) and is_tindex(h, i) do
+  def sort([h | _] = ts, i) when is_list(ts) and is_tuple_index(h, i) do
     Enum.sort(ts, fn t1, t2 -> elem(t1, i) < elem(t2, i) end)
   end
 
   @doc """
-  Get the tuple from a list with the minimum indexed element value.
+  Get the tuple with the minimum indexed element value,
+  from a non-empty list of tuples.
+
   Fails for empty list.
+  All members of the list must be tuples.
+  The index must be valid for every tuple in the list.
   """
-  @spec minimum([tuple(), ...], tindex()) :: tuple()
-  def minimum([t0 | ts], i) when is_tuple(t0) and is_tindex(t0, i) do
+  @spec minimum([tuple(), ...], E.tuple_index()) :: tuple()
+  def minimum([t0 | ts], i) when is_tuple_index(t0, i) do
     Enum.reduce(ts, t0, fn
       t1, t2 when elem(t1, i) < elem(t2, i) -> t1
       _, t2 -> t2
@@ -65,11 +77,15 @@ defmodule Exa.Tuple do
   end
 
   @doc """
-  Get the tuple from a list with the maximum indexed element values.
+  Get the tuple with the maximum value for an indexed element,
+  from a non-empty list of tuples.
+
   Fails for empty list.
+  All members of the list must be tuples. 
+  The index must be valid for every tuple in the list.
   """
-  @spec maximum([tuple(), ...], tindex()) :: tuple()
-  def maximum([t0 | ts], i) when is_tuple(t0) and is_tindex(t0, i) do
+  @spec maximum([tuple(), ...], E.tuple_index()) :: tuple()
+  def maximum([t0 | ts], i) when is_tuple_index(t0, i) do
     Enum.reduce(ts, t0, fn
       t1, t2 when elem(t1, i) > elem(t2, i) -> t1
       _, t2 -> t2
@@ -77,14 +93,17 @@ defmodule Exa.Tuple do
   end
 
   @doc """
-  Filter a tuple list to match an indexed element value.
+  Filter a tuple list to match an indexed element with a predicate function.
+
+  All members of the list must be tuples. 
+  The index must be valid for every tuple in the list.
   """
-  @spec filter([tuple()], tindex(), any()) :: [tuple()]
+  @spec filter([tuple()], E.tuple_index(), E.predicate(any())) :: [tuple()]
 
-  def filter([], _i), do: []
+  def filter([], _i, _fun), do: []
 
-  def filter([h | _] = ts, i, x) when is_list(ts) and is_tuple(h) and is_tindex(h, i) do
-    Enum.filter(ts, fn t -> elem(t, i) == x end)
+  def filter([h | _] = ts, i, fun) when is_list(ts) and is_tuple_index(h, i) and is_pred(fun) do
+    Enum.filter(ts, fn t -> fun.(elem(t, i)) end)
   end
 
   @doc "Map over a tuple."
@@ -171,8 +190,8 @@ defmodule Exa.Tuple do
     `List.zip( Tuple.to_list(t1), Tuple.to_list(t2) )`
     `|> Enum.map( fn {a,b} -> fun.(a,b) end )`
   """
-  @spec zip_map(tuple, tuple, function) :: list
-  def zip_map(t1, t2, fun) when is_tuple(t1) and is_tuple(t2) and is_function(fun, 2) do
+  @spec zip_map(tuple(), tuple(), E.bimapper(any(), b)) :: [b] when b: var
+  def zip_map(t1, t2, fun) when is_tuple(t1) and is_tuple(t2) and is_bimapper(fun) do
     tzip(t1, t2, fun, min(tuple_size(t1), tuple_size(t2)) - 1, [])
   end
 
@@ -191,10 +210,10 @@ defmodule Exa.Tuple do
   where each element is the binary combination 
   of the two corresponding input values.
   """
-  @spec zip_with(tuple(), tuple(), (any(), any() -> any())) :: tuple()
+  @spec zip_with(tuple(), tuple(), E.bimapper(any(), any())) :: tuple()
   def zip_with(tup1, tup2, fun)
       when is_tuple(tup1) and is_tuple(tup2) and
-             tuple_size(tup1) == tuple_size(tup2) and is_function(fun, 2) do
+             tuple_size(tup1) == tuple_size(tup2) and is_bimapper(fun) do
     0..(tuple_size(tup1) - 1)
     |> Enum.map(fn i -> fun.(elem(tup1, i), elem(tup2, i)) end)
     |> List.to_tuple()
@@ -202,8 +221,8 @@ defmodule Exa.Tuple do
 
   @doc "Dot product of two number tuples with the same length."
   @spec dot(tuple(), tuple()) :: tuple()
-  def dot({x1, y1}, {x2, y2}), do: x1 * x2 + y1 * y2
-  def dot({x1, y1, z1}, {x2, y2, z2}), do: x1 * x2 + y1 * y2 + z1 * z2
+  def dot({x1, y1}, {x2, y2}), do: {x1 * x2, y1 * y2}
+  def dot({x1, y1, z1}, {x2, y2, z2}), do: {x1 * x2, y1 * y2, z1 * z2}
   def dot(t1, t2), do: zip_with(t1, t2, &Kernel.*/2)
 
   # to_string protocol ----------
