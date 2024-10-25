@@ -40,35 +40,34 @@ defmodule Exa.MathTest do
   end
 
   test "flaky random test" do
-
     ntest = 1..10
 
-    Enum.each(ntest, fn _ -> 
+    Enum.each(ntest, fn _ ->
       b = uniform_bit()
-      assert is_bit(b) 
+      assert is_bit(b)
     end)
 
-    Enum.each(ntest, fn _ -> 
+    Enum.each(ntest, fn _ ->
       i = uniform_int(100)
-      assert is_in_range(1, i, 100) 
+      assert is_in_range(1, i, 100)
     end)
 
-    Enum.each(ntest, fn _ -> 
+    Enum.each(ntest, fn _ ->
       i = uniform_int(12, 27)
-      assert is_in_range(12, i, 27) 
+      assert is_in_range(12, i, 27)
     end)
 
-    Enum.each(ntest, fn _ -> 
+    Enum.each(ntest, fn _ ->
       i = uniform_int(-20, 20)
-      assert is_in_range(-20, i, 20) 
+      assert is_in_range(-20, i, 20)
     end)
 
-    Enum.each(ntest, fn _ -> 
+    Enum.each(ntest, fn _ ->
       x = uniform_float0()
       assert is_unit(x) and x != 1.0
     end)
 
-    Enum.each(ntest, fn _ -> 
+    Enum.each(ntest, fn _ ->
       x = uniform_float()
       assert is_unit(x) and not is_zero(x)
     end)
