@@ -10,7 +10,7 @@ defmodule Exa.UnexpectedMessageError do
       {pid, ref, payload} when is_pid(pid) and is_ref(ref) -> 
          ... process payload ...
       msg -> 
-         raise Exa.UnexpectedMessageException, event: msg
+         raise Exa.UnexpectedMessageError, event: msg
     end
   ```
   """
