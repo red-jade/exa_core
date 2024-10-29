@@ -1,6 +1,6 @@
-defmodule Exa.UnexpectedMessageException do
+defmodule Exa.UnexpectedMessageError do
   @moduledoc """
-  An exception to be raised when a `receive` statement 
+  An error to be raised when a `receive` statement 
   gets an unmatched message.
 
   ## Example
