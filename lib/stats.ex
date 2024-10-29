@@ -1,5 +1,9 @@
 defmodule Exa.Stats do
-  @moduledoc "Statistical utilities."
+  @moduledoc """
+  Statistical utilities.
+
+  Also see `Exa.Std.Histo1D` and other histograms.
+  """
 
   import Exa.Types
   alias Exa.Types, as: E
@@ -69,8 +73,8 @@ defmodule Exa.Stats do
   Root Mean Square (RMS) of a non-empty list of numbers.
 
   ## Examples
-      iex> rms([3,4,5])
-      5 * Exa.Math.sqrt(2/3)
+      iex> rms([4,4,7])
+      3 * Exa.Math.sqrt(3)
   """
   @spec rms([number(), ...]) :: float()
   def rms(xs) when is_list_nonempty(xs), do: do_rms(xs)

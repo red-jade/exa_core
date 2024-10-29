@@ -414,7 +414,7 @@ defmodule Exa.Types do
   # files ----------
 
   @typedoc """
-  Tag a string as a filename.
+  Tag a string as a filename (including directory name).
   The value should be the output of `Path.to_string`.
   """
   @type filename() :: String.t()
