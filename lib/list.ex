@@ -453,6 +453,42 @@ defmodule Exa.List do
   end
 
   @doc """
+  Zip two lists into a list of 2-tuples.
+
+  Sort the first list before zipping.
+
+  If the second list is shorter than the first list, 
+  then repeat the second list until the first list is exhausted.
+  The second list cannot be empty.
+
+  The result will have the same length as the first list.
+
+  If the first list contains atoms, then the result will be a Keyword list.
+
+  If you need a map, then pass the result to `Map.new/1`.
+
+  ## Examples:
+      
+      iex> zip_cyclic([1,2,3,4], [:a,:b,:c])
+      [{1,:a}, {2,:b}, {3,:c}, {4,:a}]
+
+      iex> zip_cyclic([1,2,3], [:a])
+      [{1,:a}, {2,:a}, {3,:a}]
+
+      iex> zip_cyclic([], [:a,:b,:c])
+      []
+  """
+  @spec zip_cyclic(list(), list()) :: [tuple()]
+  def zip_cyclic(xs, ys) when is_list(xs) and is_list_nonempty(ys) do 
+    xs |> Enum.sort() |> cyczip(ys, ys, [])
+  end
+
+  @spec cyczip(list(), list(), list(), [tuple()]) :: [tuple()]
+  defp cyczip([x|xs], [y|ys], yall, out), do: cyczip(xs, ys, yall, [{x, y}|out]) 
+  defp cyczip([_|_]=xs, [], yall, out), do: cyczip(xs, yall, yall, out) 
+  defp cyczip([], _, _, out), do: Enum.reverse(out) 
+
+  @doc """
   Take-while with a chained reduce state.
 
   Take elements from the front of the list 
