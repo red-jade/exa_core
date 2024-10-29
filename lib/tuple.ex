@@ -98,7 +98,7 @@ defmodule Exa.Tuple do
   All members of the list must be tuples. 
   The index must be valid for every tuple in the list.
   """
-  @spec filter([tuple()], E.tuple_index(), E.predicate(any())) :: [tuple()]
+  @spec filter([tuple()], E.tuple_index(), E.predicate?(any())) :: [tuple()]
 
   def filter([], _i, _fun), do: []
 
