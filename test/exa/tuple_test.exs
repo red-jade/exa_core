@@ -52,10 +52,10 @@ defmodule Exa.TupleTest do
   end
 
   test "map filter reduce bireduce" do
-    assert [{1,2},{5,5}] == filter([{1,2},{4,3},{5,5}], 0, &is_int_odd(&1))
+    assert [{1, 2}, {5, 5}] == filter([{1, 2}, {4, 3}, {5, 5}], 0, &is_int_odd(&1))
 
-    assert {1,4,9} == map({1,2,3}, fn i -> i * i end)
+    assert {1, 4, 9} == map({1, 2, 3}, fn i -> i * i end)
 
-    assert 26 == bireduce({1, 2, 3}, {3, 4, 5}, 0, fn x, y, acc -> acc + (x*y) end)
+    assert 26 == bireduce({1, 2, 3}, {3, 4, 5}, 0, fn x, y, acc -> acc + x * y end)
   end
 end
