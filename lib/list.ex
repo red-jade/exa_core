@@ -469,7 +469,7 @@ defmodule Exa.List do
 
   ## Examples:
       
-      iex> zip_cyclic([1,2,3,4], [:a,:b,:c])
+      iex> zip_cyclic([4,3,2,1], [:a,:b,:c])
       [{1,:a}, {2,:b}, {3,:c}, {4,:a}]
 
       iex> zip_cyclic([1,2,3], [:a])
@@ -479,14 +479,14 @@ defmodule Exa.List do
       []
   """
   @spec zip_cyclic(list(), list()) :: [tuple()]
-  def zip_cyclic(xs, ys) when is_list(xs) and is_list_nonempty(ys) do 
+  def zip_cyclic(xs, ys) when is_list(xs) and is_list_nonempty(ys) do
     xs |> Enum.sort() |> cyczip(ys, ys, [])
   end
 
   @spec cyczip(list(), list(), list(), [tuple()]) :: [tuple()]
-  defp cyczip([x|xs], [y|ys], yall, out), do: cyczip(xs, ys, yall, [{x, y}|out]) 
-  defp cyczip([_|_]=xs, [], yall, out), do: cyczip(xs, yall, yall, out) 
-  defp cyczip([], _, _, out), do: Enum.reverse(out) 
+  defp cyczip([x | xs], [y | ys], yall, out), do: cyczip(xs, ys, yall, [{x, y} | out])
+  defp cyczip([_ | _] = xs, [], yall, out), do: cyczip(xs, yall, yall, out)
+  defp cyczip([], _, _, out), do: Enum.reverse(out)
 
   @doc """
   Take-while with a chained reduce state.
