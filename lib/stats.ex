@@ -23,7 +23,7 @@ defmodule Exa.Stats do
   defguard is_data2d(xys) when is_list_nonempty(xys) and is_tuple(hd(xys))
 
   # ----------------
-  # puvbic functions
+  # public functions
   # ----------------
 
   @doc """
@@ -42,8 +42,8 @@ defmodule Exa.Stats do
   Mean and variance of a non-empty list of numbers.
 
   ```
-  μ = Σx / n
-  σ = Σ(x-μ)² / n
+  μ  = Σx / n
+  σ² = Σ(x-μ)² / n
   ```
 
   ## Examples
@@ -59,7 +59,7 @@ defmodule Exa.Stats do
   @doc """
   Variance of a non-empty list of numbers, given the mean.
 
-  `σ = Σ(x-μ)² / n`
+  `σ² = Σ(x-μ)² / n`
 
   ## Examples
       iex> var([1,2,3], 2.0)
@@ -75,7 +75,7 @@ defmodule Exa.Stats do
 
   ```
   μ = Σx / n
-  s.d. = √( Σ(x-μ)² / n )`
+  σ = √( Σ(x-μ)² / n )`
   ```
 
   ## Examples
@@ -94,7 +94,7 @@ defmodule Exa.Stats do
 
   The standard deviation is the square root of the variance:
 
-  `s.d. = √σ = √( Σ(x-μ)² / n )`
+  `σ = √( Σ(x-μ)² / n )`
 
   ## Examples
       iex> sd([4,5,6], 5.0)
@@ -118,7 +118,7 @@ defmodule Exa.Stats do
   def rms(xs) when is_data1d(xs), do: do_rms(xs)
 
   @doc """
-  Get the mode(s) of a non-empty list.
+  Get the mode(s) of a non-empty list of terms.
 
   Return the maximum frequency count
   and a list of all entries with that count.
@@ -140,7 +140,7 @@ defmodule Exa.Stats do
   end
 
   @doc """
-  Get the median(s) of a non-empty list.
+  Get the median(s) of a non-empty list of terms.
 
   The list is sorted, then the median depends on the length of the list:
   - odd: central value in the sorted list (element at `div(n,2)`)
@@ -217,7 +217,7 @@ defmodule Exa.Stats do
 
   The Pearson coefficient is defined as: 
 
-  `r = covariance(xy) / (sd(x) * sd(y))`
+  `r = covariance(xy) / (σx * σy)`
 
   ## Examples: 
       iex> pearson([{3,8},{9,6},{5,4},{3,2}])
