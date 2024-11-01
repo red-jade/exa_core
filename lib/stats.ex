@@ -180,37 +180,48 @@ defmodule Exa.Stats do
   where `a` is the intercept on the y-axis,
   and `b` is the gradient (slope).
 
+  Also return `r²`, the square of the Pearson correlation coefficient.
+
+  ```
+  a =  [ (Σy)(Σx²) - (Σx)(Σxy) ]  / [  n(Σx²) - (Σx)² ]` 
+  b =  [  n(Σxy)   - (Σx)(Σy)  ]  / [  n(Σx²) - (Σx)² ]` 
+
+  r² = [  n(Σxy)   – (Σx)(Σy)  ]² / [ (n(Σx²) - (Σx)²) * (n(Σy²)-(Σy)²) ]
+  ```
+
   ## Examples:
       iex> regression_linear([{3,8},{9,6},{5,4},{3,2}])
-      {400/96, 16/96}
+      {400/96, 16/96, 1/30}
   """
-  @spec regression_linear(data2D()) :: {intercept :: float(), gradient :: float()}
+  @spec regression_linear(data2D()) ::
+          {intercept :: float(), gradient :: float(), rsquared :: float()}
   def regression_linear(xys) when is_data2d(xys) do
-    {n, sx, sy, sxx, sxy} =
+    {n, sx, sy, sxx, syy, sxy} =
       Enum.reduce(
         xys,
-        {0, 0.0, 0.0, 0.0, 0.0},
-        fn {x, y}, {n, sx, sy, sxx, sxy} ->
-          {n + 1, sx + x, sy + y, sxx + x * x, sxy + x * y}
+        {0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        fn {x, y}, {n, sx, sy, sxx, syy, sxy} ->
+          {n + 1, sx + x, sy + y, sxx + x * x, syy + y * y, sxy + x * y}
         end
       )
 
-    d = n * sxx - sx * sx
-    ad = sy * sxx - sx * sxy
-    bd = n * sxy - sx * sy
-    {ad / d, bd / d}
+    dx = n * sxx - sx * sx
+    dy = n * syy - sy * sy
+    a = sy * sxx - sx * sxy
+    b = n * sxy - sx * sy
+    {a / dx, b / dx, b * b / (dx * dy)}
   end
 
   @doc """
-  Calculate the Pearson correlation cofficient for a non-empty 2D dataset.
+  Calculate the Pearson correlation cofficient _r_ for a non-empty 2D dataset.
 
   The Pearson coefficient is defined as: 
 
-  `pearson(xy) = covariance(xy) / (sd(x) * sd(y))`
+  `r = covariance(xy) / (sd(x) * sd(y))`
 
   ## Examples: 
       iex> pearson([{3,8},{9,6},{5,4},{3,2}])
-      0.18257418583505536
+      Exa.Math.sqrt(1/30)
   """
   @spec pearson(data2D()) :: float()
   def pearson(xys) when is_data2d(xys) do
