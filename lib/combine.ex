@@ -221,7 +221,9 @@ defmodule Exa.Combine do
 
   The formula is: `nPk = n! / (n-k)!`
 
-  If `k == 0` or `k == n` the result is `1`.
+  If `k == 0` the result is `1`.
+
+  If `k == n` the result is `n!`.
 
   If `k > n` the result is `0`.
 
@@ -273,6 +275,10 @@ defmodule Exa.Combine do
   For a combination, the ordering of the k elements does not matter (set semantics).
 
   The formula is: `nCk = n! / k! (n-k)!`
+
+  If `k == 0` or `k == n` the result is `1`.
+
+  If `k > n` the result is `0`.
 
   ## Examples
       iex> ncombs(5,3)
