@@ -75,7 +75,7 @@ defmodule Exa.Stats do
 
   ```
   μ = Σx / n
-  σ = √( Σ(x-μ)² / n )`
+  σ = √[ Σ(x-μ)² / n ]`
   ```
 
   ## Examples
@@ -94,7 +94,7 @@ defmodule Exa.Stats do
 
   The standard deviation is the square root of the variance:
 
-  `σ = √( Σ(x-μ)² / n )`
+  `σ = √[ Σ(x-μ)² / n ]`
 
   ## Examples
       iex> sd([4,5,6], 5.0)
@@ -108,7 +108,7 @@ defmodule Exa.Stats do
   @doc """
   Root Mean Square (RMS) of a non-empty list of numbers.
 
-  `rms = √( Σx² / n )`
+  `rms = √[ Σx² / n ]`
 
   ## Examples
       iex> rms([4,4,7])
@@ -163,6 +163,8 @@ defmodule Exa.Stats do
       :baz
       iex> median([10,9])
       {9,10}
+      iex> median([1])
+      1
   """
   @spec median([t, ...]) :: t | {t, t} when t: var
   def median([x]), do: x
@@ -237,7 +239,7 @@ defmodule Exa.Stats do
   The covariance is the average of the product of 
   each coordinate's difference to its mean:
 
-  `covariance = Σ[(x-μx)*(y-μy)] / n`
+  `covariance = Σ[ (x-μx) * (y-μy) ] / n`
 
   ## Examples: 
       iex> covar([{3,8},{9,6},{5,4},{3,2}], 5.0, 5.0)
@@ -251,7 +253,7 @@ defmodule Exa.Stats do
   @doc """
   Covariance of a non-empty 2D dataset.
 
-  `covariance = Σ[(x-μx)*(y-μy)] / n`
+  `covariance = Σ[ (x-μx) * (y-μy) ] / n`
 
   ## Examples:
       iex> covar([{3,8},{9,6},{5,4},{3,2}])
