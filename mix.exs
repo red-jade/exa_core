@@ -25,7 +25,7 @@ defmodule Exa.Core.MixProject do
         Exa.MixUtil.exa_deps(@lib, exa_libs())
       else
         # bootstrap
-        []
+        [@exa]
       end
 
     [
@@ -35,7 +35,7 @@ defmodule Exa.Core.MixProject do
       elixir: "~> 1.17",
       erlc_options: [:verbose, :report_errors, :report_warnings, :export_all],
       start_permanent: Mix.env() == :prod,
-      deps: [@exa | exa_deps] ++ local_deps(),
+      deps: exa_deps ++ local_deps(),
       docs: docs(),
       test_pattern: "*_test.exs",
       dialyzer: [flags: [:no_improper_lists]]
@@ -44,7 +44,7 @@ defmodule Exa.Core.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :ssl, :inets]
+      extra_applications: [:logger]
     ]
   end
 
