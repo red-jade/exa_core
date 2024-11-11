@@ -3,7 +3,7 @@ defmodule Exa.Core.MixProject do
 
   @lib :exa_core
   @name "Exa Core"
-  @ver "0.3.0"
+  @ver "0.3.1"
 
   # umbrella project
   @exa {:exa,
@@ -16,15 +16,20 @@ defmodule Exa.Core.MixProject do
   @mix_util Path.join(["deps", "exa", "mix_util.ex"])
 
   def project do
-    exa_deps =
-      if File.regular?(@mix_util) do
+    exa_deps = cond do
+       System.fetch_env("EXA_BUILD") in [:error, {:ok, "rel"}] -> 
+        # read auto-generated deps file
+        "deps.ex" |> Code.eval_file() |> elem(0) 
+
+      File.regular?(@mix_util) ->
+        # generate deps using exa umbrella project
         if not Code.loaded?(Exa.MixUtil) do
           [{Exa.MixUtil, _}] = Code.compile_file(@mix_util)
         end
 
         Exa.MixUtil.exa_deps(@lib, exa_libs())
-      else
-        # bootstrap
+      true ->
+        # bootstrap from exa umbrella project
         [@exa]
       end
 
