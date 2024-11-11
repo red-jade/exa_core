@@ -13,9 +13,7 @@ Module path: `Exa`
 - Utilities relating to specific language modules or features:<br>   
   Binary, File, Fun, List, Map, Tuple, Set (MapSet), String,<br>
   Text (chardata), Message, Option, System.
-  
-- `Indent`: an indentable text output formatter.
-  
+    
 - `Math`: floating-point arithmetic and wrappers for Erlang `:math`.
 
 - `Random`: uniform and normal distributions, wrappers for Erlang `:rand`.
@@ -35,6 +33,8 @@ Module path: `Exa`
 - `Dispatch`: _protocol_ dispatcher for tagged tuples.
 
 - `Stopwatch`: for simple timing and benchmarking tasks.
+
+- `Indent`: an indentable text output formatter.
 
 - Trivial functions for `Http`, `Logger`.
 
