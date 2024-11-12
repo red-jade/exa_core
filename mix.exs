@@ -49,9 +49,12 @@ defmodule Exa.Core.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: extra(Mix.env())
     ]
   end
+
+  defp extra(:prod), do: [:logger]
+  defp extra(_), do: [:logger, :inets, :ssl]
 
   def docs do
     [
