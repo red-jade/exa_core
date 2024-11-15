@@ -3,36 +3,9 @@ defmodule Exa.Core.MixProject do
 
   @lib :exa_core
   @name "Exa Core"
-  @ver "0.3.1"
-
-  # umbrella project
-  @exa {:exa,
-        git: "https://github.com/red-jade/exa.git",
-        branch: "main",
-        only: [:dev, :test],
-        runtime: false}
-
-  # dependency config code
-  @mix_util Path.join(["deps", "exa", "mix_util.ex"])
+  @ver "0.3.2"
 
   def project do
-    exa_deps = cond do
-       System.fetch_env("EXA_BUILD") in [:error, {:ok, "rel"}] -> 
-        # read auto-generated deps file
-        "deps.ex" |> Code.eval_file() |> elem(0) 
-
-      File.regular?(@mix_util) ->
-        # generate deps using exa umbrella project
-        if not Code.loaded?(Exa.MixUtil) do
-          [{Exa.MixUtil, _}] = Code.compile_file(@mix_util)
-        end
-
-        Exa.MixUtil.exa_deps(@lib, exa_libs())
-      true ->
-        # bootstrap from exa umbrella project
-        [@exa]
-      end
-
     [
       app: @lib,
       name: @name,
@@ -40,7 +13,7 @@ defmodule Exa.Core.MixProject do
       elixir: "~> 1.17",
       erlc_options: [:verbose, :report_errors, :report_warnings, :export_all],
       start_permanent: Mix.env() == :prod,
-      deps: exa_deps ++ local_deps(),
+      deps: exa_deps() ++ local_deps(),
       docs: docs(),
       test_pattern: "*_test.exs",
       dialyzer: [flags: [:no_improper_lists]]
@@ -85,5 +58,55 @@ defmodule Exa.Core.MixProject do
         app: false
       }
     ]
+  end
+
+  # ------------------
+  # EXA umbrella build 
+  # ------------------
+
+  # umbrella project
+  @exa {:exa,
+        git: "https://github.com/red-jade/exa.git",
+        branch: "main",
+        only: [:dev, :test],
+        runtime: false}
+
+  # dependency config code
+  @mix_util Path.join(["deps", "exa", "mix_util.ex"])
+
+  defp exa_deps() do
+    cond do
+       arg_scope() == :rel -> 
+        # read auto-generated deps file
+        "deps.ex" |> Code.eval_file() |> elem(0) 
+
+      File.regular?(@mix_util) ->
+        # generate deps using exa umbrella project
+        if not Code.loaded?(Exa.MixUtil) do
+          [{Exa.MixUtil, _}] = Code.compile_file(@mix_util)
+        end
+
+        Exa.MixUtil.exa_deps(@lib, exa_libs())
+      true ->
+        # bootstrap from exa umbrella project
+        [@exa]
+      end
+  end
+
+  # get scope from env var or cmd line
+  # return atom, default to :rel
+  defp arg_scope() do
+    default =
+      case System.fetch_env("EXA_BUILD") do
+        :error -> "rel"
+        {:ok, mix_build} -> mix_build
+      end
+
+    System.argv()
+    |> tl()
+    |> OptionParser.parse(strict: [build: :string])
+    |> elem(0)
+    |> Keyword.get(:build, default)
+    |> String.to_atom()
   end
 end
