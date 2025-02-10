@@ -85,4 +85,20 @@ defmodule Exa.BinaryTest do
     expect = ((imax + imin) / 2) |> ceil() |> trunc()
     assert expect == imid(imin, imax)
   end
+
+  test "nset bits" do
+    # round up/down the nbits a little to avoid multiples of 4
+    do_nset(0..7, 3)
+    do_nset(8..255, 11)
+    do_nset(256..1_024, 15)
+  end
+
+  defp do_nset(range, nb) do
+    Enum.each(range, fn i ->
+      b = <<i::size(nb)>>
+      n = b |> to_bits() |> Enum.sum()
+      assert nset(i) == n
+      assert nset(b) == n
+    end)
+  end
 end

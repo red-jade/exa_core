@@ -248,6 +248,28 @@ defmodule Exa.Binary do
   end
 
   @doc """
+  Count the number of set bits in a 
+  bitstring, binary or unsigned integer.
+  """
+  @spec nset(E.bits() | non_neg_integer()) :: E.count()
+  def nset(i) when is_int_nonneg(i), do: nset_int(i, 0)
+  def nset(buf) when is_bits(buf), do: nset_bit(buf, 0)
+
+  @spec nset_int(non_neg_integer(), E.count()) :: E.count()
+  defp nset_int(0, n), do: n
+  defp nset_int(i, n), do: nset_int(i >>> 4, n + nset_int4(i &&& 0xF))
+
+  @spec nset_bit(E.bits(), E.count()) :: E.count()
+  defp nset_bit(<<b::4, rest::bits>>, n), do: nset_bit(rest, n + nset_int4(b))
+  defp nset_bit(<<b::3>>, n), do: n + nset_int4(b)
+  defp nset_bit(<<b::2>>, n), do: n + nset_int4(b)
+  defp nset_bit(<<b::1>>, n), do: n + b
+  defp nset_bit(<<>>, n), do: n
+
+  # unroll? 
+  defp nset_int4(i), do: (i &&& 0x1) + (i >>> 1 &&& 0x1) + (i >>> 2 &&& 0x1) + (i >>> 3 &&& 0x1)
+
+  @doc """
   Reverse a binary as bytes.
 
   Equivalent to `buf |> to_bytes() |> Enum.reverse() |> from_bytes()`.
