@@ -236,6 +236,8 @@ defmodule Exa.Types do
   @typedoc "Type alias for bitstring."
   @type bits() :: bitstring()
 
+  defguard is_bits(b) when is_bitstring(b)
+
   # char ----------
 
   # includes null 0x0 and control characters
@@ -353,11 +355,11 @@ defmodule Exa.Types do
 
   defguard is_enum(e) when is_list(e) or is_map(e) or is_set(e) or is_range(e)
 
-  defguard enum_size(e) when 
-       (is_list(e) and length(e)) or 
-       (is_map(e) and map_size(e)) or
-        set_size(e) or 
-       (is_range(e) and range_size(e))
+  defguard enum_size(e)
+           when (is_list(e) and length(e)) or
+                  (is_map(e) and map_size(e)) or
+                  set_size(e) or
+                  (is_range(e) and range_size(e))
 
   defguard is_enum_empty(e) when enum_size(e) == 0
 
