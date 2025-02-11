@@ -222,14 +222,7 @@ defmodule Exa.Binary do
   nbit = 0..7
   """
   @spec bit(E.bits(), {non_neg_integer(), 0..7}) :: E.bit()
-  def bit(buf, {nbyte, 0}), do: byte(buf, nbyte) >>> 7 &&& 0x01
-  def bit(buf, {nbyte, 1}), do: byte(buf, nbyte) >>> 6 &&& 0x01
-  def bit(buf, {nbyte, 2}), do: byte(buf, nbyte) >>> 5 &&& 0x01
-  def bit(buf, {nbyte, 3}), do: byte(buf, nbyte) >>> 4 &&& 0x01
-  def bit(buf, {nbyte, 4}), do: byte(buf, nbyte) >>> 3 &&& 0x01
-  def bit(buf, {nbyte, 5}), do: byte(buf, nbyte) >>> 2 &&& 0x01
-  def bit(buf, {nbyte, 6}), do: byte(buf, nbyte) >>> 1 &&& 0x01
-  def bit(buf, {nbyte, 7}), do: byte(buf, nbyte) &&& 0x01
+  def bit(buf, {nbyte, nbit}), do: byte(buf, nbyte) >>> (7 - nbit) &&& 0x01
 
   @doc """
   Set the _{nbyte, nbit}_ bit in a buffer.
@@ -248,7 +241,7 @@ defmodule Exa.Binary do
   end
 
   @doc """
-  Count the number of set bits in a 
+  Count the number of set bits (1s) in a 
   bitstring, binary or unsigned integer.
   """
   @spec nset(E.bits() | non_neg_integer()) :: E.count()
@@ -257,17 +250,29 @@ defmodule Exa.Binary do
 
   @spec nset_int(non_neg_integer(), E.count()) :: E.count()
   defp nset_int(0, n), do: n
-  defp nset_int(i, n), do: nset_int(i >>> 4, n + nset_int4(i &&& 0xF))
+  defp nset_int(i, n), do: nset_int(i >>> 8, n + nset_byte(i &&& 0xFF))
 
   @spec nset_bit(E.bits(), E.count()) :: E.count()
-  defp nset_bit(<<b::4, rest::bits>>, n), do: nset_bit(rest, n + nset_int4(b))
-  defp nset_bit(<<b::3>>, n), do: n + nset_int4(b)
-  defp nset_bit(<<b::2>>, n), do: n + nset_int4(b)
-  defp nset_bit(<<b::1>>, n), do: n + b
+  defp nset_bit(<<b::8, rest::bits>>, n), do: nset_bit(rest, n + nset_byte(b))
   defp nset_bit(<<>>, n), do: n
+  defp nset_bit(<<0::1>>, n), do: n
+  defp nset_bit(<<1::1>>, n), do: n + 1
+  # bit sizes 2..7
+  defp nset_bit(bits, n), do: n + nset_byte(to_uint(bits))
 
-  # unroll? 
-  defp nset_int4(i), do: (i &&& 0x1) + (i >>> 1 &&& 0x1) + (i >>> 2 &&& 0x1) + (i >>> 3 &&& 0x1)
+  # assumes unrolled shift-n-mask is faster than 
+  # recursive reduction over pattern matched bits
+  @spec nset_byte(E.byte()) :: 0..8
+  defp nset_byte(i) do
+    (i &&& 0x1) +
+      (i >>> 1 &&& 0x01) +
+      (i >>> 2 &&& 0x01) +
+      (i >>> 3 &&& 0x01) +
+      (i >>> 4 &&& 0x01) +
+      (i >>> 5 &&& 0x01) +
+      (i >>> 6 &&& 0x01) +
+      (i >>> 7 &&& 0x01)
+  end
 
   @doc """
   Reverse a binary as bytes.
@@ -411,7 +416,7 @@ defmodule Exa.Binary do
   def float16(buf, endian \\ :big), do: float(buf, 32, endian)
 
   @doc "Get a float of specified bit size from a buffer."
-  @spec float(E.bits(), E.count1(), endianness()) :: {float(), E.bits()}
+  @spec float(E.bits(), E.bsize(), endianness()) :: {float(), E.bits()}
 
   def float(buf, sz, :big) do
     <<f::size(sz)-float-big, rest::binary>> = buf
@@ -458,7 +463,7 @@ defmodule Exa.Binary do
   def int8(buf, endian \\ :big), do: int(buf, 8, endian)
 
   @doc "Get an unsigned integer with a specified bit size from a buffer."
-  @spec uint(E.bits(), E.count1(), endianness()) :: {E.uint(), E.bits()}
+  @spec uint(E.bits(), E.bsize(), endianness()) :: {E.uint(), E.bits()}
   def uint(buf, sz, endian \\ :big)
 
   def uint(buf, sz, :big) do
@@ -471,8 +476,22 @@ defmodule Exa.Binary do
     {i, rest}
   end
 
+  @doc "Get an unsigned integer of arbitrary size from the whole buffer."
+  @spec to_uint(E.bits(), endianness()) :: E.uint()
+  def to_uint(buf, endian \\ :big)
+
+  def to_uint(buf, :big) do
+    <<i::size(bit_size(buf))-integer-unsigned-big>> = buf
+    i
+  end
+
+  def to_uint(buf, :little) do
+    <<i::size(bit_size(buf))-integer-unsigned-little>> = buf
+    i
+  end
+
   @doc "Get a signed integer with a specified bit size from a buffer."
-  @spec int(E.bits(), E.count1(), endianness()) :: {E.uint(), E.bits()}
+  @spec int(E.bits(), E.bsize(), endianness()) :: {E.uint(), E.bits()}
   def int(buf, sz, endian \\ :big)
 
   def int(buf, sz, :big) do
@@ -526,7 +545,7 @@ defmodule Exa.Binary do
   def append_uint8(buf, i, endian \\ :big), do: append_uint(buf, i, 8, endian)
 
   @doc "Append an unsigned integer of specified bit size to a buffer."
-  @spec append_uint(E.bits(), non_neg_integer(), E.count1(), endianness()) :: E.bits()
+  @spec append_uint(E.bits(), non_neg_integer(), E.bsize(), endianness()) :: E.bits()
   def append_uint(buf, i, sz, endian \\ :big)
   def append_uint(buf, i, sz, :big), do: <<buf::bits, i::size(sz)-integer-signed-big>>
   def append_uint(buf, i, sz, :little), do: <<buf::bits, i::size(sz)-integer-signed-little>>
