@@ -230,7 +230,7 @@ defmodule Exa.Option do
     if is_map(opt), do: opt, else: error("map", key, opt)
   end
 
-  @spec get_map(Keyword.t(), atom(), map()) :: map()
+  @spec get_map(Keyword.t(), atom(), map() | nil) :: map() | nil
   def get_map(opts, key, default \\ %{}) do
     opt = Keyword.get(opts, key, default)
     if is_map(opt), do: opt, else: default
