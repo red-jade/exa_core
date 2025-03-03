@@ -253,15 +253,13 @@ defmodule Exa.Binary do
   defp nset_int(i, n), do: nset_int(i >>> 8, n + nset_byte(i &&& 0xFF))
 
   @spec nset_bit(E.bits(), E.count()) :: E.count()
-  defp nset_bit(<<b::8, rest::bits>>, n), do: nset_bit(rest, n + nset_byte(b))
-  defp nset_bit(<<>>, n), do: n
-  defp nset_bit(<<0::1>>, n), do: n
-  defp nset_bit(<<1::1>>, n), do: n + 1
-  # bit sizes 2..7
-  defp nset_bit(bits, n), do: n + nset_byte(to_uint(bits))
-
   # assumes unrolled shift-n-mask is faster than 
   # recursive reduction over pattern matched bits
+  defp nset_bit(<<b::8, rest::bits>>, n), do: nset_bit(rest, n + nset_byte(b))
+  defp nset_bit(<<0::1, rest::bits>>, n), do: nset_bit(rest, n)
+  defp nset_bit(<<1::1, rest::bits>>, n), do: nset_bit(rest, n + 1)
+  defp nset_bit(<<>>, n), do: n
+
   @spec nset_byte(E.byte()) :: 0..8
   defp nset_byte(i) do
     (i &&& 0x1) +
