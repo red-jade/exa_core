@@ -157,9 +157,9 @@ defmodule Exa.Binary do
   @spec to_bit(E.bit()) :: E.bits()
   def to_bit(b), do: <<b::1>>
 
-  # -------------------
-  # access bits & bytes
-  # -------------------
+  # -----------------------------------
+  # conversions and access bits & bytes
+  # -----------------------------------
 
   @doc "Convert all of a bitstring to a list of integer bits."
   @spec to_bits(E.bits()) :: [E.bit()]
@@ -172,11 +172,43 @@ defmodule Exa.Binary do
 
   @doc "Create a new bitstring from a list of integer bits."
   @spec from_bits([E.bit()]) :: E.bits()
-  def from_bits(bits), do: do_fbits(bits, <<>>)
+  def from_bits(bits) when is_list(bits), do: do_fbits(bits, <<>>)
 
   @spec do_fbits([E.bits()], E.bits()) :: E.bits()
   defp do_fbits([b | bits], out), do: do_fbits(bits, <<out::bits, b::1>>)
   defp do_fbits([], out), do: out
+
+  @doc "Convert a bitstring to a string of binary digits."
+  @spec to_bitstr(E.bits()) :: String.t()
+  def to_bitstr(bits) when is_bits(bits), do: do_b2s(bits, <<>>)
+
+  defp do_b2s(<<b::1, rest::bits>>, str), do: do_b2s(rest, <<str::binary, (?0+b)::8>>)
+  defp do_b2s(<<>>, str), do: str
+
+  @doc "Convert a string of binary digits to a bitstring."
+  @spec from_bitstr(String.t()) :: E.bits()
+  def from_bitstr(str) when is_string(str), do: do_s2b(str, <<>>)
+
+  defp do_s2b(<<?0::8, rest::binary>>, bits), do: do_s2b(rest, <<bits::bits, 0::1>>)
+  defp do_s2b(<<?1::8, rest::binary>>, bits), do: do_s2b(rest, <<bits::bits, 1::1>>)
+  defp do_s2b(<<>>, str), do: str
+
+  @doc "Convert a non-negative integer to a bitstring."
+  def from_uint(i) when is_int_nonneg(i), do: from_uint(i, nbits(i))
+
+  @doc "Convert a non-negative integer to a fixed width bitstring."
+  def from_uint(i, n) when is_int_nonneg(i) and is_count(n) and i < (1 <<< n) do
+    do_i2b(i, n, <<>>)
+  end
+
+  defp do_i2b(_i, 0, bits), do: bits
+
+  defp do_i2b(i, n, bits) do
+    n_1 = n - 1
+    mask = i &&& ((1 <<< n_1) - 1)
+    shift = (i >>> n_1) &&& 0x01
+    do_i2b(mask, n_1, <<bits::bits, shift::1>>)
+  end
 
   @doc """
   Take some of a bitstring as a list of integer bits.

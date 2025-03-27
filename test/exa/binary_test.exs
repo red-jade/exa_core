@@ -47,6 +47,18 @@ defmodule Exa.BinaryTest do
 
     assert <<0::1, 0::1, 1::1, 1::1, 0::1, 0::1, 1::1, 0::1>> ==
              reverse_bits(<<0::1, 1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>>)
+
+    assert "010" == 2 |> from_uint(3) |> to_bitstr()
+    assert "111" == 7 |> from_uint() |> to_bitstr()
+
+    assert <<0::1, 1::1, 1::1>> == from_bitstr("011") 
+    assert 3 == to_uint(<<0::1, 1::1, 1::1>>)
+
+    assert 99 == 99 |> from_uint() |> to_bitstr() |> from_bitstr() |> to_uint()
+
+    assert 76 == to_uint(<<0::1, 1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>>)
+    assert <<0::1, 1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>> == from_uint(76, 8)
+    assert <<1::1, 0::1, 0::1, 1::1, 1::1, 0::1, 0::1>> == from_uint(76)
   end
 
   test "imid" do

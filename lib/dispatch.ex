@@ -138,13 +138,15 @@ defmodule Exa.Dispatch do
   def dispatch(disp, tup, fun, args)
       when is_map(disp) and is_tuple(tup) and
              is_atom(fun) and is_list(args) and is_map_key(disp, elem(tup, 0)) do
-    # dispatch based on an existing graph tuple
+    # dispatch based on an existing tuple
     disp |> Map.fetch!(elem(tup, 0)) |> apply(fun, [tup | args])
   end
 
   def dispatch(disp, tag_or_tup, _, _)
       when is_map(disp) and
              (is_atom(tag_or_tup) or is_tuple(tag_or_tup)) do
+              IO.inspect(disp)
+              IO.inspect(tag_or_tup)
     tag = if is_tuple(tag_or_tup), do: elem(tag_or_tup, 0), else: tag_or_tup
     msg = "Failed dispatch: tag '#{tag}' not key in #{inspect(disp)}"
     Logger.error(msg)
