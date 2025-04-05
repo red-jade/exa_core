@@ -85,4 +85,23 @@ defmodule Exa.Random do
   @spec normal_float(mean :: float(), variance :: E.nonneg_float()) :: float()
   def normal_float(u, v) when is_float(u) and is_zero(v), do: u
   def normal_float(u, v) when is_float(u) and is_float_pos(v), do: :rand.normal(u, v)
+
+  @doc """
+  Generate a list of values from a 0-arity random generator function.
+
+  For example:
+
+  - list of _n_ random uniform floats:
+    `generate( n, &uniform_float/0 )`
+
+  - list of _n_ random integers in the range `i..j` inclusive:
+    `generate( n, fn -> uniform_int(i,j) end)`
+
+  """
+  @spec generate(E.count1(), fun()) :: list()
+  def generate(n, gen) when is_count1(n) and is_function(gen, 0), do: do_gen(n,gen,[])
+
+  @spec do_gen(E.count(), fun(), list()) :: list()
+  defp do_gen(0, _gen, out), do: out
+  defp do_gen(n, gen, out), do: do_gen(n-1, gen, [gen.()|out])
 end
