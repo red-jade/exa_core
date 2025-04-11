@@ -189,8 +189,10 @@ defmodule Exa.List do
 
   @doc """
   Test if a list contains any duplicates. 
+  Equivalent to testing if the list is a set.
 
   The empty list does not contain duplicates, so the result is true.
+  
   Behaviour is equivalent to testing `Enum.frequencies` for values > 1,
   or comparing length with that of `Enum.uniq`,
   but this should be more efficient, 
