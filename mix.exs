@@ -3,7 +3,7 @@ defmodule Exa.Core.MixProject do
 
   @lib :exa_core
   @name "Exa Core"
-  @ver "0.3.2"
+  @ver "0.3.3"
 
   def project do
     [
